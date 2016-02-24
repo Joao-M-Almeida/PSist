@@ -8,7 +8,7 @@ int main(){
 
     char *p = (char*) malloc(1);
 
-    
+
 
     printf("&a - %p\n",  &a);
 
