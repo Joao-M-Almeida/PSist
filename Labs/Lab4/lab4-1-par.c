@@ -16,31 +16,29 @@ void error_and_die(const char *msg) {
 }
 
 int main(){
-	
-	char *memname = "odd_even";
-  int i;
-		
-	int fd = shm_open(memname,  O_RDWR, 0666);
-	if (fd == -1)
-		error_and_die("shm_open");
 
-		
-	shm_region *ptr = mmap(0, sizeof(shm_region), PROT_READ , MAP_SHARED, fd, 0);
-	if (ptr == MAP_FAILED)
-		error_and_die("mmap");
-	close(fd);
+    char const *memname = "odd_even";
+    int i;
+
+    int fd = shm_open(memname,  O_RDWR, 0666);
+    if (fd == -1)
+        error_and_die("shm_open");
 
 
+    shm_region *ptr = (shm_region *) mmap(0, sizeof(shm_region), PROT_READ , MAP_SHARED, fd, 0);
+    if (ptr == MAP_FAILED)
+        error_and_die("mmap");
+    close(fd);
 
 
-	int token;
-	i = 0;
-	int fd_token;
-	while(1){
-	  sleep(1);
-  	  if(ptr->value%2 == 0){
-	    printf("%d %d\n", i++, ptr->value);
-	  }
-	}
+
+
+    i = 0;
+    while(1){
+        sleep(1);
+        if(ptr->value%2 == 0){
+            printf("%d %ld\n", i++, ptr->value);
+        }
+    }
 
 }

@@ -21,7 +21,7 @@ unsigned int shared_mem_size ;
 int count_even = 0;
 int count_odd = 0;
 
-void error_and_die(char error[]) {
+void error_and_die(char const error[]) {
     printf("%s\n", error );
     exit(-1);
 }
@@ -35,7 +35,6 @@ void alarm_handler(int signum){
     close(fd);
     munmap(shared, shared_mem_size);
     exit(0);
-    
 }
 
 
