@@ -1,4 +1,4 @@
-/*    gcc -Wall -pedantic -ansi -std=gnu99 server-skel.c -o server1.out    */
+/*    gcc -Wall -pedantic -ansi -std=gnu99 server2nd.c -o server.out    */
 
 #include "storyserver.h"
 
@@ -73,12 +73,21 @@ int main(){
             clean_up(-1);
         }
 
-        printf("Received %s\n in %d bytes", read_msg, len_rcvd);
+        printf("Received %s\n in %d bytes\n", read_msg, len_rcvd);
         /* process message */
 
         story = (char *) realloc(story, strlen(story) + strlen(read_msg) +1);
         strcat(story, read_msg);
+
+        free(read_msg);
+
         printf("Story: %s\n", story);
+        if(sendtowrapped(story,strlen(story),(const struct sockaddr *)&sender_addr,len_sender_addr,sock)==-1){
+            perror("Send Error:");
+            clean_up(-1);
+        }
+        printf("Sent Story:\n");
+
     }
     printf("OK\n");
     clean_up(0);

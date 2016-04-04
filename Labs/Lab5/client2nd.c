@@ -1,4 +1,4 @@
-/*    gcc -Wall -pedantic -ansi -std=gnu99 client-skel.c -o client1.out    */
+/*    gcc -Wall -pedantic -ansi -std=gnu99 client2nd.c -o client.out    */
 
 
 #include "storyserver.h"
@@ -86,7 +86,18 @@ int main(){
     printf("Sent %d bytes\n", l);
 
     /* receive story */
+    int len_rcvd;
+    char * read_msg;
+    struct sockaddr_un sender_addr;
+    unsigned int len_sender_addr = sizeof(sender_addr);
 
+    len_rcvd = recvfromwrapped(&read_msg, (struct sockaddr *) &sender_addr, &len_sender_addr, sock);
+    if(len_rcvd == -1){
+        perror("Read Error");
+        clean_up(-1);
+    }
+    printf("Story: %s\n",read_msg );
+    free(read_msg);
     printf("OK\n");
     clean_up(0);
 
