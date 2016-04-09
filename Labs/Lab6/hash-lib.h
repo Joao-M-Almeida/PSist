@@ -1,8 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
-
-typedef void* Item;
-typedef void (*delete_func) (Item);
+#include "item.h"
 
 typedef struct _hash_item {
     struct _hash_item *next;
