@@ -1,8 +1,5 @@
 #include <stdint.h>
-#include <stdbool.h>
-
-/*TODO define item on own .h*/
-typedef void * Item;
+#include "item.h"
 
 #ifndef _PSISKV_H
 #define _PSISKV_H
