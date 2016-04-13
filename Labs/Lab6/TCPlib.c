@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include "item.h"
+#include <stdint.h>
 
 /*
 Connects IP and port to the socket referred to by the return value.
@@ -45,9 +46,9 @@ Sends message to the socket referred to by fd.
 Sends only first len bytes. returns 0 on successful send.
 Returns -1 on error and sets errno.
 */
-int TCPsend(int fd, char * message, unsigned int len)
+int TCPsend(int fd, uint8_t * message, unsigned int len)
 {
-    char *ptr = message;
+    uint8_t * ptr = message;
     int nwritten, nleft;
 
     /* TODO remember to protect write() against SIGPIPE
@@ -77,9 +78,9 @@ Retuns the number of bytes written to str.
 Returns -1 on unsuccessful read. retuns -2 if connection is closed by peer.
 */
 
-int TCPrecv(int fd, char *str, unsigned int len)
+int TCPrecv(int fd, uint8_t *str, unsigned int len)
 {
-    char *ptr = str;
+    uint8_t *ptr = str;
     int nread;
 
     nread = read(fd, ptr, len);
