@@ -6,10 +6,10 @@
 #define _PSISKV_SERVER_H
 
 
-int process_psiskv_request(int kv_descriptor, hash_table store);
-int write_req(hash_table store, int kv_descriptor, uint32_t key, unsigned int value_len);
-int read_req(hash_table store, int kv_descriptor, uint32_t key);
-int delete_req(hash_table store, int kv_descriptor, uint32_t key);
+int process_psiskv_request(int kv_descriptor, hash_table store, uint32_t size);
+int write_req(hash_table store, int kv_descriptor, uint32_t key, unsigned int value_len, uint32_t size);
+int read_req(hash_table store, int kv_descriptor, uint32_t key, uint32_t size);
+int delete_req(hash_table store, int kv_descriptor, uint32_t key, uint32_t size);
 
 
 

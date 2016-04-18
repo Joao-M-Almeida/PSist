@@ -47,7 +47,7 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length){
     }
 
     /*
-        Send Receive Write Response;
+        Receive Write Response;
     */
     uint8_t * to_recv = (uint8_t *) &key_value;
     if(TCPrecv(kv_descriptor, to_recv, sizeof(to_recv))==-1){

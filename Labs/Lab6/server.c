@@ -3,6 +3,7 @@
 #include "inetutils.h"
 #include <stdio.h>
 #include <sys/time.h>
+#include <string.h>
 
 #define STDIN 0
 #define max(A,B) ((A) >= (B)?(A):(B))
@@ -16,7 +17,7 @@ int main(int argc, char *argv[]){
     int server_port;
     /*char server_ip[32];*/
     int server_fd, maxfd, new_fd, afd;
-    bool stop_server =false;
+    bool stop_server = false;
     int counter;
     fd_set rfds;
     char command[32];
@@ -28,11 +29,11 @@ int main(int argc, char *argv[]){
 
     while(!stop_server){
         FD_ZERO(&rfds);
-		FD_SET(STDIN, &rfds);
-		FD_SET(server_fd, &rfds);
+        FD_SET(STDIN, &rfds);
+        FD_SET(server_fd, &rfds);
         maxfd = max(server_fd, afd);
         counter = select(maxfd + 1, &rfds, (fd_set*)NULL,(fd_set*)NULL,(struct timeval *)NULL);
-		if(counter <= 0) errfunc(1);
+        if(counter <= 0) errfunc(1);
         if(FD_ISSET(STDIN, &rfds)){
             fgets(command, 128, stdin);
             if(!strcmp(command, "exit\n")){

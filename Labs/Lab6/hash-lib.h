@@ -13,6 +13,9 @@ typedef struct _hash_item {
 
 typedef hash_item** hash_table;
 
+/*
+    Create a hash table with space for size elements. 
+*/
 hash_table create_hash(uint32_t size);
 void delete_hash(hash_table hash, uint32_t size, void (*delete_func) (Item));
 uint32_t hash_function(uint32_t key, uint32_t size);

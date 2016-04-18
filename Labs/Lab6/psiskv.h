@@ -11,14 +11,15 @@ typedef enum msg_type {
     READ_REQ,
     READ_RESP,
     DELETE_REQ,
-    DELETE_RESP
+    DELETE_RESP,
+    ERROR
 } msg_type;
 
-    typedef struct kv_msg{
-        msg_type type;
-        uint32_t key;
-        unsigned int value_len;
-    } kv_msg;
+typedef struct kv_msg{
+    msg_type type;
+    uint32_t key;
+    unsigned int value_len;
+} kv_msg;
 
 int kv_connect(char * kv_server_ip, int kv_server_port);
 void kv_close(int kv_descriptor);
