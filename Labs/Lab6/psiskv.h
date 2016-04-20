@@ -21,6 +21,7 @@ typedef struct kv_msg{
     unsigned int value_len;
 } kv_msg;
 
+const char * msg_type_to_str(int type);
 int kv_connect(char * kv_server_ip, int kv_server_port);
 void kv_close(int kv_descriptor);
 int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length);

@@ -44,17 +44,20 @@ int main(int argc, char const *argv[]) {
 
     connection = kv_connect( (char *) "127.0.0.1", port);
     if (connection<0){
-        perror("TCPconnect");
+        perror("KVconnect");
         clean_up(-1);
     }
 
     char value[BUF_LEN];
     char key_char[BUF_LEN];
-    printf("Connected.\n Key:\n");
+
+    printf("Key to use:\n" );
     fgets(key_char, BUF_LEN, stdin);
     uint32_t key = atoi(key_char);
     printf("Value to insert:\n" );
     fgets(value, BUF_LEN, stdin);
+
+    printf("Sending:\n\tKey:%d\n\tValue:%s\n",key,value);
 
     int result = kv_write(connection, key, value, strlen(value)+1);
     if (result<0){
