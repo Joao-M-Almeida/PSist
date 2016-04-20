@@ -1,30 +1,26 @@
-main_c = Lab6.c
-main_file = main
-server_c = server.c
-server_file = server
-client_c = client.c
-client_file = client
+CC = gcc
+CFLAGS = -Wall -pedantic -ansi -std=gnu99
+DEPS = debug.h item.h hash-lib.h inetutils.h TCPlib.h psiskv.h psiskv_server.h
+OBJ = kvserver.o hash-lib.o inetutils.o psiskv_lib.o psiskv_server.o TCPlib.o
+EDITOR = gedit
 
-inet: inetutils.c inetutils.h
-	gcc -c inetutils.c -o inetutils.o -Wall
+main.out: $(OBJ)
+	$(CC) $(CFLAGS) $^ -o $@
 
-tcp: TCPlib.c TCPlib.h
-	gcc -c TCPlib.c -o TCPlib.o -Wall
+%.o: %.c $(DEPS)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-hash: hash-lib.c hash-lib.h
-	gcc -c hash-lib.c -o hash-lib.o -Wall
 
-server: hash tcp inet $(server_c)
-	gcc $(server_c) -o $(server_file) TCPlib.o inetutils.o hash-lib.o
+c:
+	clear
+	rm *.o
 
-server_run: server
-	./server
+o:
+	$(EDITOR) *.c *.h makefile &
 
-client: tcp inet $(client_c)
-	gcc $(client_c) -o $(client_file) TCPlib.o inetutils.o
 
-client_run: client
-	./client
 
-main: hash tcp inet $(main_c)
-	gcc $(main_c) -o $(main_file) TCPlib.o inetutils.o hash-lib.o
+
+# $@ reffers to named before :
+# $^ reffers to all named after :
+# $< reffers to first after :
