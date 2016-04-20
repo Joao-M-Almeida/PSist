@@ -31,6 +31,10 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length){
 
     uint8_t * to_send = (uint8_t *) &key_value;
 
+
+    #ifdef DEBUG
+        printf("Writing key:%d\nValue_len:\n%d\n",key, value_length);
+    #endif
     /*
         Send the Write_Request;
     */

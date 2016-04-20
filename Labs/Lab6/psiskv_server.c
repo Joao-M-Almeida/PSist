@@ -17,16 +17,25 @@ int process_psiskv_request(int kv_descriptor, hash_table store, uint32_t size){
 
     switch (key_value.type) {
         case WRITE_REQ:
+            #ifdef DEBUG
+                printf("Received WRITE_REQ");
+            #endif
             if(write_req(store, kv_descriptor, key_value.key, key_value.value_len, size)<0){
                 return -1;
             }
             break;
         case READ_REQ:
+            #ifdef DEBUG
+                printf("Received READ_REQ");
+            #endif
             if(read_req(store, kv_descriptor, key_value.key, size)<0){
                 return -1;
             }
             break;
         case DELETE_REQ:
+            #ifdef DEBUG
+                printf("Received DELETE_REQ");
+            #endif
             if(delete_req(store, kv_descriptor, key_value.key, size)<0){
                 return -1;
             }

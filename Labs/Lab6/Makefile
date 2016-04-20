@@ -2,7 +2,8 @@ CC = gcc
 CFLAGS = -Wall -pedantic -ansi -std=gnu99
 DEPS = debug.h item.h hash-lib.h inetutils.h TCPlib.h psiskv.h psiskv_server.h
 OBJ = kvserver.o hash-lib.o inetutils.o psiskv_lib.o psiskv_server.o TCPlib.o
-CLIENT = writeclient.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
+WCLIENT = writeclient.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
+RCLIENT = readclient.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
 EDITOR = gedit
 
 main.out: $(OBJ)
@@ -18,9 +19,11 @@ c:
 
 o:
 	$(EDITOR) *.c *.h makefile &
-client.out: $(CLIENT)
+client.out: $(WCLIENT)
 	$(CC) $(CFLAGS) $^ -o $@
 
+rclient.out: $(RCLIENT)
+	$(CC) $(CFLAGS) $^ -o $@
 
 
 # $@ reffers to named before :
