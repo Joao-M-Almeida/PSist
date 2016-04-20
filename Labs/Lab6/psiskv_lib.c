@@ -96,6 +96,10 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length){
 }
 
 /*
+TODO: Take precautions for disconnected connections during the TCPrecv and TCPwrite
+*/
+
+/*
     Sends a Read_request to server and waits for response key_read_server.
 */
 int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){

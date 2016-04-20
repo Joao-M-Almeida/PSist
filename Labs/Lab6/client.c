@@ -89,6 +89,18 @@ int main(int argc, char const *argv[]) {
                 break;
             case 'D':
                 printf("Delete Value:\n");
+                printf("Key to delete: " );
+                fgets(key_char, BUF_LEN, stdin);
+                key = atoi(key_char);
+                result = kv_delete(connection, key);
+                if (result<0){
+                    perror("KVDelete");
+                    clean_up(-1);
+                }
+                break;
+            case 'Q':
+                printf("Exiting...\n");
+                clean_up(0);
                 break;
             default:
                 printf("Unknown option.\n");

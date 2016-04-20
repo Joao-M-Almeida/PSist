@@ -92,8 +92,14 @@ int main(int argc, char const *argv[]) {
             printf("Awaiting for Request\n");
             err = process_psiskv_request(incoming, kv_store, STORESIZE);
             if (err<0){
-                perror("Process Request");
-                clean_up(-1);
+                if(err == -1){
+                    perror("Process Request");
+                    clean_up(-1);
+                }else if (err == -2){
+                    printf("Connection Closed by peer.\n" );
+                    break;
+                }
+
             }
             printf("Processed Request\n");
         }

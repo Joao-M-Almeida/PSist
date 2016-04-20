@@ -11,8 +11,9 @@ int process_psiskv_request(int kv_descriptor, hash_table store, uint32_t size){
 
     kv_msg key_value;
     uint8_t * to_recv = (uint8_t *) &key_value;
-    if(TCPrecv(kv_descriptor, to_recv, sizeof(kv_msg))==-1){
-        return -1;
+    int result = TCPrecv(kv_descriptor, to_recv, sizeof(kv_msg));
+    if( result < 0){
+        return result;
     }
 
     #ifdef DEBUG
@@ -53,6 +54,9 @@ int process_psiskv_request(int kv_descriptor, hash_table store, uint32_t size){
     return 0;
 }
 
+/*
+TODO: Take precautions for disconnected connections during the TCPrecv and TCPwrite
+*/
 
 int write_req(hash_table store, int kv_descriptor, uint32_t key, unsigned int value_len, uint32_t size){
 
