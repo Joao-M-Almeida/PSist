@@ -47,7 +47,9 @@ Item read_item(hash_table hash, uint32_t key, uint32_t size){
     for(aux = hash[index];
         aux != NULL && aux->key != key;
         aux = aux->next);
-    return aux->item;
+    if(aux != NULL)
+        return aux->item;
+    return NULL;
 }
 
 bool insert_item(hash_table hash, Item item, uint32_t key, uint32_t size){

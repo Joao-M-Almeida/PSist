@@ -1,7 +1,8 @@
 CC = gcc
 CFLAGS = -Wall -pedantic -ansi -std=gnu99
-DEPS = debug.h item.h hash-lib.h inetutils.h TCPlib.h psiskv.h psiskv_server.h
-OBJ = kvserver.o hash-lib.o inetutils.o psiskv_lib.o psiskv_server.o TCPlib.o
+DEPS = debug.h item.h hash-lib.h inetutils.h psiskv.h psiskv_server.h psiskv_pserver.h TCPlib.h
+OBJ = kvserver.o hash-lib.o inetutils.o psiskv_lib.o psiskv_server.o psiskv_pserver.o TCPlib.o
+TEST_OBJ = thkvserver.c hash-lib.o inetutils.o psiskv_lib.o psiskv_pserver.o TCPlib.o
 WCLIENT = writeclient.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
 RCLIENT = readclient.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
 EDITOR = gedit
@@ -9,9 +10,11 @@ EDITOR = gedit
 main.out: $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@
 
-%.o: %.c $(DEPS)
-	$(CC) $(CFLAGS) -c $< -o $@
+test.out: $(TEST_OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ -pthread
 
+%.o: %.c $(DEPS)
+	$(CC) $(CFLAGS) -c $< -o $@ -pthread
 
 c:
 	clear
