@@ -1,19 +1,15 @@
 CC = gcc
 CFLAGS = -Wall -pedantic -ansi -std=gnu99
-DEPS = debug.h item.h hash-lib.h inetutils.h psiskv.h psiskv_server.h psiskv_pserver.h TCPlib.h
+DEPS = debug.h item.h hash-lib.h inetutils.h psiskv.h psiskv_server.h TCPlib.h
 OBJ = kvserver.o hash-lib.o inetutils.o psiskv_lib.o psiskv_server.o TCPlib.o
 CLIENT = client.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
 EDITOR = gedit
 
-TEST_OBJ = thkvserver.c hash-lib.o inetutils.o psiskv_lib.o psiskv_pserver.o TCPlib.o
-WCLIENT = writeclient.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
-RCLIENT = readclient.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
-
 server.out: $(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ -pthread
 
 client.out: $(CLIENT)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ -pthread
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@ -pthread
@@ -26,8 +22,6 @@ c:
 o:
 	$(EDITOR) *.c *.h makefile &
 
-test.out: $(TEST_OBJ)
-	$(CC) $(CFLAGS) $^ -o $@ -pthread
 
 # $@ reffers to named before :
 # $^ reffers to all named after :

@@ -1,6 +1,6 @@
 #include "psiskv.h"
 #include "hash-lib.h"
-#include "psiskv_pserver.h"
+#include "psiskv_server.h"
 #include "TCPlib.h"
 #include "debug.h"
 #include <stdlib.h>

@@ -3,7 +3,7 @@
 #include "inetutils.h"
 #include "item.h"
 #include "psiskv.h"
-#include "psiskv_pserver.h"
+#include "psiskv_server.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
