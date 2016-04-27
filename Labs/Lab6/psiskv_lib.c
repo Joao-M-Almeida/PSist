@@ -85,8 +85,7 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length){
     }
 
     #ifdef DEBUG
-        printf("After Write received: \ntype: %s\nkey:%d\nValue_len:\n%d\n",
-            msg_type_to_str(key_value.type), key_value.key, key_value.value_len);
+        printf("After Write received: \ntype: %s\n",msg_type_to_str(key_value.type) );
     #endif
 
     if(key_value.type != WRITE_RESP){

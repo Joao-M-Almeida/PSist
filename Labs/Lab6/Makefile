@@ -5,9 +5,10 @@ OBJ = kvserver.o hash-lib.o inetutils.o psiskv_lib.o psiskv_server.o psiskv_pser
 TEST_OBJ = thkvserver.c hash-lib.o inetutils.o psiskv_lib.o psiskv_pserver.o TCPlib.o
 WCLIENT = writeclient.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
 RCLIENT = readclient.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
+CLIENT = client.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
 EDITOR = gedit
 
-main.out: $(OBJ)
+server.out: $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@
 
 test.out: $(TEST_OBJ)
@@ -22,10 +23,7 @@ c:
 
 o:
 	$(EDITOR) *.c *.h makefile &
-client.out: $(WCLIENT)
-	$(CC) $(CFLAGS) $^ -o $@
-
-rclient.out: $(RCLIENT)
+client.out: $(CLIENT)
 	$(CC) $(CFLAGS) $^ -o $@
 
 

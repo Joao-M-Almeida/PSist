@@ -86,15 +86,18 @@ int main(int argc, char const *argv[]) {
             perror("TCPaccept");
             clean_up(-1);
         }
+        printf("Received connection\n");
 
-        /*Server only handles one request per client, should be able to handle more*/
-        printf("Received Request\n");
-        err = process_psiskv_request(incoming, kv_store, STORESIZE);
-        if (err<0){
-            perror("Process Request");
-            clean_up(-1);
+        while (1) {
+            printf("Awaiting for Request\n");
+            err = process_psiskv_request(incoming, kv_store, STORESIZE);
+            if (err<0){
+                perror("Process Request");
+                clean_up(-1);
+            }
+            printf("Processed Request\n");
         }
-        printf("Processed Request\n");
+
 
     }
 
