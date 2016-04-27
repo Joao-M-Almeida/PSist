@@ -40,7 +40,7 @@ int server;
 hash_table kv_store;
 struct arguments *args;
 
-/*Implementar modos para saber o que limpar*/
+/*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
     delete_hash(kv_store, STORESIZE, free);
@@ -65,7 +65,17 @@ void * answer_call( void *args ){
 
     printf("Sock_fd: %d\n\n\n", sock_fd);
 
-    process_psiskv_prequest(sock_fd, kv_store, STORESIZE, _args->readlock, _args->writelock);
+    int err = process_psiskv_prequest(sock_fd, kv_store,
+        STORESIZE, _args->readlock, _args->writelock);
+
+    if (err<0){
+        if(err == -1){
+            perror("Process Request");
+        }else if (err == -2){
+            printf("Connection Closed by peer.\n" );
+        }
+    }
+
     close(sock_fd);
 
     printf("And I'm dead(done)!!\n");
@@ -78,6 +88,8 @@ int main(int argc, char const *argv[]) {
     /* code */
 
     unsigned short port = DEFAULTPORT;
+
+    /*Threads*/
     pthread_t tid;
     pthread_mutex_t readlock, writelock;
 
@@ -98,12 +110,11 @@ int main(int argc, char const *argv[]) {
     /*Initializing of the mutexs*/
     if (pthread_mutex_init(&readlock, NULL) != 0) {
         printf("\nread mutex init failed\n");
-        return 1;
+        return -1;
     }
-
     if (pthread_mutex_init(&writelock, NULL) != 0) {
         printf("\nwrite mutex init failed\n");
-        return 1;
+        return -1;
     }
 
     /*Create arguments structure*/
@@ -140,7 +151,7 @@ int main(int argc, char const *argv[]) {
         printf("Creating a thread\n");
         args->sock_fd = incoming;
         pthread_create(&tid, NULL, &answer_call, (void *) &args);
-        /* isto foi mais facil do que parecia */
+
     }
     pthread_mutex_destroy(&readlock);
     pthread_mutex_destroy(&writelock);
