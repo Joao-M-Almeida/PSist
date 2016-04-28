@@ -10,10 +10,11 @@ int process_psiskv_prequest(int kv_descriptor, hash_table store, uint32_t size, 
 
     kv_msg key_value;
     uint8_t * to_recv = (uint8_t *) &key_value;
-    if(TCPrecv(kv_descriptor, to_recv, sizeof(kv_msg))==-1){
-        return -1;
+    int result = TCPrecv(kv_descriptor, to_recv, sizeof(kv_msg));
+    if( result < 0){
+        return result;
     }
-    printf("PASCOA\n");
+    
     #ifdef DEBUG
         printf("Request: \ntype: %s\nkey:%d\nValue_len:%d\n",
             msg_type_to_str(key_value.type), key_value.key, key_value.value_len);

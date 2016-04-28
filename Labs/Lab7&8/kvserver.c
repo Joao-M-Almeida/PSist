@@ -65,14 +65,18 @@ void * answer_call( void *args ){
 
     printf("Sock_fd: %d\n\n\n", sock_fd);
 
-    int err = process_psiskv_prequest(sock_fd, kv_store,
-        STORESIZE, _args->readlock, _args->writelock);
+    while (1) {
+        int err = process_psiskv_prequest(sock_fd, kv_store,
+            STORESIZE, _args->readlock, _args->writelock);
 
-    if (err<0){
-        if(err == -1){
-            perror("Process Request");
-        }else if (err == -2){
-            printf("Connection Closed by peer.\n" );
+        if (err<0){
+            if(err == -1){
+                perror("Process Request");
+                return(NULL);
+            }else if (err == -2){
+                printf("Connection Closed by peer.\n" );
+                break;
+            }
         }
     }
 
