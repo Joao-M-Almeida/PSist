@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "hash-lib.h"
+#include "phash-lib.h"
 
 hash_table create_hash(uint32_t size){
     return (hash_item**) calloc(size, sizeof( hash_item* ));

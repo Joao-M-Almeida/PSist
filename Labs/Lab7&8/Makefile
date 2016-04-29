@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Wall -pedantic -ansi -std=gnu99
-DEPS = debug.h item.h hash-lib.h inetutils.h psiskv.h psiskv_server.h TCPlib.h
-OBJ = kvserver.o hash-lib.o inetutils.o psiskv_lib.o psiskv_server.o TCPlib.o
-CLIENT = client.o hash-lib.o inetutils.o psiskv_lib.o TCPlib.o
+DEPS = debug.h item.h phash-lib.h inetutils.h psiskv.h psiskv_server.h TCPlib.h
+OBJ = kvserver.o phash-lib.o inetutils.o psiskv_lib.o psiskv_server.o TCPlib.o
+CLIENT = client.o inetutils.o psiskv_lib.o TCPlib.o
 EDITOR = gedit
 
 server.out: $(OBJ)

@@ -1,5 +1,4 @@
 #include "TCPlib.h"
-#include "hash-lib.h"
 #include "inetutils.h"
 #include "item.h"
 #include "psiskv.h"
