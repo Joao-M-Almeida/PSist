@@ -1,5 +1,5 @@
 #include "psiskv.h"
-#include "hash-lib.h"
+#include "phash-lib.h"
 #include <pthread.h>
 
 #ifndef _PSISKV_SERVER_H

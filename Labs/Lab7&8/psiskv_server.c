@@ -1,5 +1,5 @@
 #include "psiskv.h"
-#include "hash-lib.h"
+#include "phash-lib.h"
 #include "psiskv_server.h"
 #include "TCPlib.h"
 #include "debug.h"
@@ -14,7 +14,7 @@ int process_psiskv_prequest(int kv_descriptor, hash_table store, uint32_t size, 
     if( result < 0){
         return result;
     }
-    
+
     #ifdef DEBUG
         printf("Request: \ntype: %s\nkey:%d\nValue_len:%d\n",
             msg_type_to_str(key_value.type), key_value.key, key_value.value_len);
