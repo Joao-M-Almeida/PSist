@@ -51,11 +51,12 @@ Item read_item(hash_table hash, uint32_t key, uint32_t size){
     for(aux_hitem = hash[index];
         aux_hitem != NULL && aux_hitem->key != key;
         aux_hitem = aux_hitem->next);
-    if(aux_hitem != NULL)
+    if(aux_hitem != NULL){
         pthread_rwlock_rdlock(&aux_hitem->lock);
         item = aux_hitem->item; /* TODO: função para copiar */
         pthread_rwlock_unlock(&aux_hitem->lock);
         return item;
+    }
     return NULL;
 }
 
@@ -66,11 +67,14 @@ int insert_item(hash_table hash, Item item, uint32_t key, uint32_t size, int ove
         printf("Insert in the beggining\n");
         hash[index] = create_hitem(key, item);
     } else {
+        if( hash[index]->next == NULL){
+            printf("item in list with key: %d\n", hash[index]->key);
+        }
         for(aux = hash[index];
             aux->next != NULL && aux->key != key;
             aux = aux->next){
                 printf("item in list with key: %d\n", aux->key);
-            };
+        }
         if(!aux->next){
             aux->next = create_hitem(key, item);
         } else {
