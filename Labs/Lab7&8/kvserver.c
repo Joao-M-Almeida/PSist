@@ -59,12 +59,10 @@ void * answer_call( void *args ){
     printf("\n\n#NEW THREAD\n\n");
 
     pthread_detach(pthread_self());
-    printf("And awaaay we goo!!\n");
-
     printf("Sock_fd: %d\n\n\n", sock_fd);
 
     while (1) {
-        int err = process_psiskv_prequest(sock_fd, kv_store,STORESIZE);
+        int err = process_psiskv_prequest(sock_fd,kv_store,STORESIZE);
 
         if (err<0){
             if(err == -1){
@@ -78,8 +76,6 @@ void * answer_call( void *args ){
     }
 
     close(sock_fd);
-
-    printf("And I'm dead(done)!!\n");
     printf("#END OF THREAD\n\n");
 
     return(NULL);
@@ -92,7 +88,6 @@ int main(int argc, char const *argv[]) {
 
     /*Threads*/
     pthread_t tid;
-    pthread_mutex_t readlock, writelock;
 
 
     /* Capture CTRL-C to exit gracefuly */

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "phash-lib.h"
 
 hash_table create_hash(uint32_t size){
@@ -9,7 +10,7 @@ hash_item *create_hitem(uint32_t key, Item item){
     hash_item *new_hitem;
     new_hitem = (hash_item*) malloc(sizeof(hash_item));
     new_hitem->key = key;
-    pthread_rwlock_init(new_hitem->lock, NULL);
+    pthread_rwlock_init(&new_hitem->lock, NULL);
     new_hitem->item = item;
     new_hitem->next = NULL;
     return new_hitem;
@@ -44,33 +45,46 @@ uint hash_function(uint32_t key, uint32_t size){
 
 Item read_item(hash_table hash, uint32_t key, uint32_t size){
     uint32_t index = hash_function(key, size);
-    hash_item *aux;
-    for(aux = hash[index];
-        aux != NULL && aux->key != key;
-        aux = aux->next);
-    if(aux != NULL)
-        printf("Trying RW read lock");
-        pthread_rwlock_tryrdlock(aux->lock);
-        return aux->item;
+    hash_item *aux_hitem;
+    Item item;
+
+    for(aux_hitem = hash[index];
+        aux_hitem != NULL && aux_hitem->key != key;
+        aux_hitem = aux_hitem->next);
+    if(aux_hitem != NULL)
+        pthread_rwlock_rdlock(&aux_hitem->lock);
+        item = aux_hitem->item; /* TODO: função para copiar */
+        pthread_rwlock_unlock(&aux_hitem->lock);
+        return item;
     return NULL;
 }
 
-bool insert_item(hash_table hash, Item item, uint32_t key, uint32_t size){
+int insert_item(hash_table hash, Item item, uint32_t key, uint32_t size, int overwrite){
     uint32_t index = hash_function(key, size);
     hash_item *aux;
     if(!hash[index]){
+        printf("Insert in the beggining\n");
         hash[index] = create_hitem(key, item);
     } else {
         for(aux = hash[index];
             aux->next != NULL && aux->key != key;
-            aux = aux->next);
-        if(!aux){
+            aux = aux->next){
+                printf("item in list with key: %d\n", aux->key);
+            };
+        if(!aux->next){
             aux->next = create_hitem(key, item);
         } else {
-            return false;
+            printf("Item with key %d already exists with value %s; overwrite: %d\n", key, (char *)aux->item, overwrite);
+            if(overwrite){
+                pthread_rwlock_wrlock(&aux->lock);
+                /* TODO: delete e rewrite */
+                pthread_rwlock_unlock(&aux->lock);
+            }else{
+                return -2;
+            }
         }
     }
-    return true;
+    return 0;
 }
 
 bool delete_item(hash_table hash, uint32_t key, uint32_t size, void (*delete_func) (Item)){

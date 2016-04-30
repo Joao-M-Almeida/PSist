@@ -9,7 +9,7 @@
 typedef struct _hash_item {
     struct _hash_item *next;
     uint32_t key;
-    pthread_rwlock_t *lock;
+    pthread_rwlock_t lock;
     Item item;
 } hash_item;
 
@@ -22,6 +22,6 @@ hash_table create_hash(uint32_t size);
 void delete_hash(hash_table hash, uint32_t size, void (*delete_func) (Item));
 uint32_t hash_function(uint32_t key, uint32_t size);
 Item read_item(hash_table hash, uint32_t key, uint32_t size);
-bool insert_item(hash_table hash, Item item, uint32_t key, uint32_t size);
+int insert_item(hash_table hash, Item item, uint32_t key, uint32_t size, int overwrite);
 bool delete_item(hash_table hash, uint32_t key, uint32_t size, void (*delete_func) (Item));
 #endif
