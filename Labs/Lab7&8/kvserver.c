@@ -66,7 +66,8 @@ void * answer_call( void *args ){
 
         if (err<0){
             if(err == -1){
-                perror("Process Request");
+                printf("Error while processing request.\n" );
+                /*perror("Process Request");*/
                 return(NULL);
             }else if (err == -2){
                 printf("Connection Closed by peer.\n" );

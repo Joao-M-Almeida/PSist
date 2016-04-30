@@ -138,14 +138,18 @@ int read_preq(hash_table store, int kv_descriptor, uint32_t key, uint32_t size){
 
 int delete_preq(hash_table store, int kv_descriptor, uint32_t key, uint32_t size){
 
+    kv_msg message;
+    message.type = DELETE_RESP;
 
     /*TODO: Use correct delete function instead of free*/
     if (!delete_item(store, key, size, free)){
-        return -1;
+        /*Item doesn't exist*/
+        message.value_len = 0;
+    } else{
+        message.value_len = 1;
     }
 
-    kv_msg message;
-    message.type = DELETE_RESP;
+
     if(TCPsend(kv_descriptor, (uint8_t *) &message, sizeof(message))==-1){
         return -1;
     }

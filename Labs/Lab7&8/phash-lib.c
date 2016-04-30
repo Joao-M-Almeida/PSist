@@ -95,6 +95,7 @@ bool delete_item(hash_table hash, uint32_t key, uint32_t size, void (*delete_fun
     uint32_t index = hash_function(key, size);
     hash_item *curr, *next;
     if(!hash[index]){
+        /*No item on that index*/
         return false;
     }else if(hash[index]->key == key){
         next = hash[index]->next;
@@ -108,6 +109,7 @@ bool delete_item(hash_table hash, uint32_t key, uint32_t size, void (*delete_fun
             curr->next = next->next;
             delete_hitem(next, delete_func);
         }else{
+            /*Item not present*/
             return false;
         }
     }

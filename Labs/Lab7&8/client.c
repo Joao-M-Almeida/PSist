@@ -98,13 +98,13 @@ int main(int argc, char const *argv[]) {
                 fgets(key_char, BUF_LEN, stdin);
                 key = atoi(key_char);
                 result = kv_delete(connection, key);
-                if (result==-1){
+                if (result == -1){
                     perror("KVDelete");
                     clean_up(-1);
-                } else if(result == -2){
-                    printf("No Item with key %d\n", key);
+                } else if(result == 1){
+                    printf("No Item with key: %d\n", key);
                 } else {
-
+                    printf("Deleted item with key: %d\n", key);
                 }
                 break;
             case 'Q':

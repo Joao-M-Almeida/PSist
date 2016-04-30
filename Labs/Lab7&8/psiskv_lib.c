@@ -181,12 +181,21 @@ int kv_delete(int kv_descriptor, uint32_t key){
     }
 
     #ifdef DEBUG
-        printf("After DELETE_REQ received: \ntype: %s\nkey:%d\nValue_len:\n%d\n",
+        printf("\nAfter DELETE_REQ received: \ntype: %s\nkey:%d\nValue_len:%d\n\n",
             msg_type_to_str(key_value.type), key_value.key, key_value.value_len);
     #endif
 
     if(key_value.type != DELETE_RESP){
-        return -2;
+        return -1;
+    }
+
+    if(key_value.value_len == 0){
+        /*No item with that key*/
+        #ifdef DEBUG
+            printf("No item with key: %d\n",key);
+        #endif
+        /*TODO: Ask which value should return on this situation*/
+        return 1;
     }
 
     return 0;
