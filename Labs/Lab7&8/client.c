@@ -68,11 +68,14 @@ int main(int argc, char const *argv[]) {
                 printf("Sending:\n\tKey:%d\n\tValue:%s\n",key,value);
 
                 result = kv_write(connection, key, value, strlen(value)+1);
-                if (result<0){
+                if (result == -1){
                     perror("KVWrite");
                     clean_up(-1);
+                } else if(result == -2){
+                    printf("Value with key %d already exists\n", key);
+                } else {
+                    printf("Inserted value: %s \n", value);
                 }
-                printf("Inserted value: %s \n", value);
                 break;
             case 'R':
                 printf("Read Value:\n");
@@ -80,11 +83,14 @@ int main(int argc, char const *argv[]) {
                 fgets(key_char, BUF_LEN, stdin);
                 key = atoi(key_char);
                 result = kv_read(connection, key, value, BUF_LEN);
-                if (result<0){
+                if (result == -1){
                     perror("KVRead");
                     clean_up(-1);
+                } else if(result==-2){
+                    printf("No Item with key %d\n", key);
+                } else {
+                    printf("Read value: %s \n", value);
                 }
-                printf("Read value: %s \n", value);
                 break;
             case 'D':
                 printf("Delete Value:\n");
@@ -92,9 +98,13 @@ int main(int argc, char const *argv[]) {
                 fgets(key_char, BUF_LEN, stdin);
                 key = atoi(key_char);
                 result = kv_delete(connection, key);
-                if (result<0){
+                if (result==-1){
                     perror("KVDelete");
                     clean_up(-1);
+                } else if(result == -2){
+                    printf("No Item with key %d\n", key);
+                } else {
+
                 }
                 break;
             case 'Q':
