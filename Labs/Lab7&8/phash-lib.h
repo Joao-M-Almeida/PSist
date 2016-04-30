@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <pthread.h>
 #include "item.h"
 
 #ifndef _HASH_LIB
@@ -8,13 +9,14 @@
 typedef struct _hash_item {
     struct _hash_item *next;
     uint32_t key;
+    pthread_rwlock_t *lock;
     Item item;
 } hash_item;
 
 typedef hash_item** hash_table;
 
 /*
-    Create a hash table with space for size elements. 
+    Create a hash table with space for size elements.
 */
 hash_table create_hash(uint32_t size);
 void delete_hash(hash_table hash, uint32_t size, void (*delete_func) (Item));

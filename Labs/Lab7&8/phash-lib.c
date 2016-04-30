@@ -9,6 +9,7 @@ hash_item *create_hitem(uint32_t key, Item item){
     hash_item *new_hitem;
     new_hitem = (hash_item*) malloc(sizeof(hash_item));
     new_hitem->key = key;
+    pthread_rwlock_init(new_hitem->lock, NULL);
     new_hitem->item = item;
     new_hitem->next = NULL;
     return new_hitem;
@@ -48,6 +49,8 @@ Item read_item(hash_table hash, uint32_t key, uint32_t size){
         aux != NULL && aux->key != key;
         aux = aux->next);
     if(aux != NULL)
+        printf("Trying RW read lock");
+        pthread_rwlock_tryrdlock(aux->lock);
         return aux->item;
     return NULL;
 }

@@ -32,8 +32,6 @@ Server to handle acess to the Key Value store. Only serves a client at a time.
 
 struct arguments {
     int sock_fd;
-    pthread_mutex_t readlock;
-    pthread_mutex_t writelock;
 };
 
 int server;
@@ -66,8 +64,7 @@ void * answer_call( void *args ){
     printf("Sock_fd: %d\n\n\n", sock_fd);
 
     while (1) {
-        int err = process_psiskv_prequest(sock_fd, kv_store,
-            STORESIZE, _args->readlock, _args->writelock);
+        int err = process_psiskv_prequest(sock_fd, kv_store,STORESIZE);
 
         if (err<0){
             if(err == -1){
@@ -111,20 +108,8 @@ int main(int argc, char const *argv[]) {
     /*Create Hash Table*/
     kv_store =  create_hash(STORESIZE);
 
-    /*Initializing of the mutexs*/
-    if (pthread_mutex_init(&readlock, NULL) != 0) {
-        printf("\nread mutex init failed\n");
-        return -1;
-    }
-    if (pthread_mutex_init(&writelock, NULL) != 0) {
-        printf("\nwrite mutex init failed\n");
-        return -1;
-    }
-
     /*Create arguments structure*/
     args = (struct arguments *) malloc(sizeof(struct arguments));
-    args->readlock = readlock;
-    args->writelock = writelock;
 
     /*Bind all local inet adresses and port*/
     server = TCPcreate(INADDR_ANY, port);
@@ -157,7 +142,5 @@ int main(int argc, char const *argv[]) {
         pthread_create(&tid, NULL, &answer_call, (void *) &args);
 
     }
-    pthread_mutex_destroy(&readlock);
-    pthread_mutex_destroy(&writelock);
     clean_up(0);
 }
