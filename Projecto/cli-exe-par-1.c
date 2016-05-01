@@ -5,14 +5,14 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#define MAX_VALUES 1000
+#define MAX_VALUES 100
 int main(){
 	char linha[100];
-	
-	
+
+
 	if(fork() == 0){
-			
-		int kv = kv_connect("127.0.0.1", 9999);
+
+		int kv = kv_connect((char*)"127.0.0.1", 9999);
 
 		for (uint32_t i = 0; i < MAX_VALUES; i +=2){
 			sprintf(linha, "%u", i);
@@ -22,7 +22,7 @@ int main(){
 
 
 	}else{
-		int kv = kv_connect("127.0.0.1", 9999);
+		int kv = kv_connect( (char*)"127.0.0.1", 9999);
 
 		for (uint32_t i = 1; i < MAX_VALUES; i +=2){
 			sprintf(linha, "%u", i);
@@ -36,12 +36,12 @@ int main(){
 			sprintf(linha, "%u", i);
 			kv_write(kv, i , linha, strlen(linha)+1, 0);
 		}
-			
-		
+
+
 		kv_close(kv);
 
 	}
-	
-	
-	
+
+
+
 }
