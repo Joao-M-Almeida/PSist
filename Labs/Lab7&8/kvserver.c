@@ -56,10 +56,10 @@ void * answer_call( void *args ){
     struct arguments *_args = *((struct arguments **) args);
     int sock_fd = _args->sock_fd;
 
-    printf("\n\n#NEW THREAD\n\n");
+    printf("\n\n\t#NEW THREAD\n");
 
     pthread_detach(pthread_self());
-    printf("Sock_fd: %d\n\n\n", sock_fd);
+    printf("\tSock_fd: %d\n\n\n", sock_fd);
 
     while (1) {
         int err = process_psiskv_prequest(sock_fd,kv_store);
@@ -77,7 +77,7 @@ void * answer_call( void *args ){
     }
 
     close(sock_fd);
-    printf("#END OF THREAD\n\n");
+    printf("\t#END OF THREAD\n\n");
 
     return(NULL);
 }

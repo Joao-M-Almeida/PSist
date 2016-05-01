@@ -1,3 +1,3 @@
-#ifndef DEBUG
+/*#ifndef DEBUG
 #define DEBUG
-#endif
+#endif*/

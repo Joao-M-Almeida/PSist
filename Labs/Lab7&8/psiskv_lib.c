@@ -153,7 +153,13 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
     /*
         Copy the read value to the given pointer at most value_len bytess
     */
-    strncpy(value, (char *) to_recv, value_length);
+
+    if ( (unsigned int) value_length > key_value.value_len){
+        strncpy(value, (char *) to_recv, key_value.value_len);
+    }else{
+        strncpy(value, (char *) to_recv, value_length);
+    }
+    free(to_recv);
 
     return 0;
 }
