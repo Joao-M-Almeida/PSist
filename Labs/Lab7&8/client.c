@@ -11,7 +11,7 @@
 #include <sys/types.h>
 
 
-#define DEFAULTPORT 9998
+#define DEFAULTPORT 9999
 int connection;
 
 

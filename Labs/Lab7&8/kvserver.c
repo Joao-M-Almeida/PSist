@@ -14,7 +14,7 @@
 #include <sys/types.h>
 
 #define STORESIZE 200
-#define DEFAULTPORT 9998
+#define DEFAULTPORT 9999
 #define MAXCLIENTS 5
 
 /*

@@ -4,7 +4,7 @@
 #include "psiskv.h"
 #include <stdlib.h>
 #include <string.h>
-#include "debug.h"
+/*#include "debug.h"*/
 #include <stdio.h>
 
 const char * msg_type_to_str(int type){
@@ -62,7 +62,7 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
 
 
     #ifdef DEBUG
-        printf("Writing key:%d\nValue_len:\n%d\n",key, value_length);
+        printf("Writing key:%d\nValue_len:%d\n",key, value_length);
     #endif
     /*
         Send the Write_Request;

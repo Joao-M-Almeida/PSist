@@ -100,6 +100,8 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
     /*Send the response*/
     kv_msg message;
     message.type = WRITE_RESP;
+    message.key = 0;
+    message.value_len = 0;
     if(TCPsend(kv_descriptor, (uint8_t *) &message, sizeof(message))==-1){
         return -1;
     }
@@ -118,6 +120,9 @@ int read_preq(hash_table * store, int kv_descriptor, uint32_t key){
         /*If the key is not present should send ERROR to client*/
         kv_msg message;
         message.type = ERROR;
+        message.value_len = 0;
+        message.key = 0;
+
         if(TCPsend(kv_descriptor, (uint8_t *) &message, sizeof(message))==-1){
             return -1;
         }
@@ -128,6 +133,7 @@ int read_preq(hash_table * store, int kv_descriptor, uint32_t key){
     kv_msg read_response;
     read_response.type = READ_RESP;
     read_response.value_len = to_send->size;
+    read_response.key = 0;
     if(TCPsend(kv_descriptor, (uint8_t *) &read_response, sizeof(read_response))==-1){
         return -1;
     }
@@ -148,6 +154,7 @@ int delete_preq(hash_table * store, int kv_descriptor, uint32_t key){
 
     kv_msg message;
     message.type = DELETE_RESP;
+    message.key = 0;
 
     /*TODO: Use correct delete function instead of free*/
     if (!delete_item(store, key, free)){
