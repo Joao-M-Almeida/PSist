@@ -191,9 +191,6 @@ int kv_delete(int kv_descriptor, uint32_t key){
 
     if(key_value.value_len == 0){
         /*No item with that key*/
-        #ifdef DEBUG
-            printf("No item with key: %d\n",key);
-        #endif
         /*TODO: Ask which value should return on this situation*/
         return 1;
     }

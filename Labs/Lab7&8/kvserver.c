@@ -35,13 +35,13 @@ struct arguments {
 };
 
 int server;
-hash_table kv_store;
+hash_table * kv_store;
 struct arguments *args;
 
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
-    delete_hash(kv_store, STORESIZE, free);
+    delete_hash(kv_store, free);
     free(args);
     TCPclose(server);
     exit(exit_val);
@@ -62,7 +62,7 @@ void * answer_call( void *args ){
     printf("Sock_fd: %d\n\n\n", sock_fd);
 
     while (1) {
-        int err = process_psiskv_prequest(sock_fd,kv_store,STORESIZE);
+        int err = process_psiskv_prequest(sock_fd,kv_store);
 
         if (err<0){
             if(err == -1){
