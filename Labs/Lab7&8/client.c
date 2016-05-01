@@ -67,7 +67,7 @@ int main(int argc, char const *argv[]) {
 
                 printf("Sending:\n\tKey:%d\n\tValue:%s\n",key,value);
 
-                result = kv_write(connection, key, value, strlen(value)+1);
+                result = kv_write(connection, key, value, strlen(value)+1,0);
                 if (result == -1){
                     perror("KVWrite");
                     clean_up(-1);

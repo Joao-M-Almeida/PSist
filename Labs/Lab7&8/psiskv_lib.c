@@ -48,11 +48,14 @@ void kv_close(int kv_descriptor){
 /*
     Sends a Write_Request to server and waits for Write_Response.
 */
-int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length){
+int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, int overwrite){
 
     kv_msg key_value;
     key_value.key = key;
     key_value.type = WRITE_REQ;
+    if(overwrite == 1){
+        key_value.type = WRITE_REQ_OW;
+    }
     key_value.value_len = value_length;
 
     uint8_t * to_send = (uint8_t *) &key_value;

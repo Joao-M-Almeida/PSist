@@ -31,6 +31,14 @@ int process_psiskv_prequest(int kv_descriptor, hash_table * store){
                 return -1;
             }
             break;
+        case WRITE_REQ_OW:
+            #ifdef DEBUG
+                printf("Received WRITE_REQ_OW\n");
+            #endif
+            if(write_preq(store, kv_descriptor, key_value.key, key_value.value_len, 1)<0){
+                return -1;
+            }
+            break;
         case READ_REQ:
             #ifdef DEBUG
                 printf("Received READ_REQ\n");
