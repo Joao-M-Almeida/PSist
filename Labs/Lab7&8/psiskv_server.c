@@ -72,6 +72,13 @@ value_struct * create_struct( unsigned int size, uint8_t *value ){
     return vs;
 }
 
+void destroy_struct(void * void_to_destroy) {
+    /*TODO: not sure if this is the correct way*/
+    value_struct * to_destroy = (value_struct * ) void_to_destroy;
+    free(to_destroy->value);
+    free(to_destroy);
+}
+
 int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int value_len, int overwrite){
     int err;
     /*Now read value_len bytes from the socket*/
@@ -88,9 +95,8 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
     /*TODO: Define functions to create and delete the items in these structs */
     value_struct * to_store = create_struct( value_len, item );
 
-    /*TODO: Use correct delete function instead of free*/
     /*Insert the item on the hash store*/
-    err = insert_item(store,to_store,key,overwrite, free);
+    err = insert_item(store,to_store,key,overwrite, destroy_struct);
     if(err < 0){
         return err;
     }
@@ -116,7 +122,9 @@ int read_preq(hash_table * store, int kv_descriptor, uint32_t key){
     to_send = (value_struct *) read_item(store, key);
 
     if(to_send == NULL){
-        printf("Value not found.\n");
+        #ifdef DEBUG
+            printf("Value not found.\n");
+        #endif
         /*If the key is not present should send ERROR to client*/
         kv_msg message;
         message.type = ERROR;
@@ -156,8 +164,7 @@ int delete_preq(hash_table * store, int kv_descriptor, uint32_t key){
     message.type = DELETE_RESP;
     message.key = 0;
 
-    /*TODO: Use correct delete function instead of free*/
-    if (!delete_item(store, key, free)){
+    if (!delete_item(store, key, destroy_struct)){
         /*Item doesn't exist*/
         message.value_len = 0;
     } else{

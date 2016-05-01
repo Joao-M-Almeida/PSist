@@ -41,7 +41,7 @@ struct arguments *args;
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
-    delete_hash(kv_store, free);
+    delete_hash(kv_store, destroy_struct);
     free(args);
     TCPclose(server);
     exit(exit_val);

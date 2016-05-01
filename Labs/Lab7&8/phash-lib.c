@@ -52,8 +52,13 @@ void delete_hash(hash_table * hash, void (*delete_func) (Item)){
                 delete_hitem(curr, delete_func);
                 curr = next;
             }
+
         }
+        pthread_rwlock_destroy(hash->locks[i]);
+        free(hash->locks[i]);
     }
+    free(hash->locks);
+    free(hash->table);
     free(hash);
     return;
 }
