@@ -11,7 +11,7 @@
 #include <sys/types.h>
 
 
-#define DEFAULTPORT 9999
+#define DEFAULTPORT 9998
 int connection;
 
 
@@ -34,6 +34,8 @@ int main(int argc, char const *argv[]) {
     /* Capture CTRL-C to exit gracefuly */
     struct sigaction action;
     action.sa_handler = exit_gracefuly;
+    action.sa_flags = 0;
+    sigemptyset(&action.sa_mask);
     sigaction(SIGINT, &action, NULL);
 
     /*Client can receive port number as argument*/

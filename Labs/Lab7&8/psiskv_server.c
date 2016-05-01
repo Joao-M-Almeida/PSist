@@ -2,11 +2,9 @@
 #include "phash-lib.h"
 #include "psiskv_server.h"
 #include "TCPlib.h"
-#include "debug.h"
+/*#include "debug.h"*/
 #include <stdlib.h>
 #include <stdio.h>
-
-#define DEBUG
 
 int process_psiskv_prequest(int kv_descriptor, hash_table * store){
 
@@ -96,8 +94,9 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
     if(err < 0){
         return err;
     }
-
-    printf("insert_item returned %d\n", err);
+    #ifdef DEBUG
+        printf("insert_item returned %d\n", err);
+    #endif
     /*Send the response*/
     kv_msg message;
     message.type = WRITE_RESP;
