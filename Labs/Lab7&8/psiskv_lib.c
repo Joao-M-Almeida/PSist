@@ -12,6 +12,9 @@ const char * msg_type_to_str(int type){
         case WRITE_REQ:
             return "WRITE_REQ";
             break;
+        case WRITE_REQ_OW:
+            return "WRITE_REQ_OW";
+            break;
         case WRITE_RESP:
             return "WRITE_RESP";
             break;
@@ -92,6 +95,9 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
     #endif
 
     if(key_value.type != WRITE_RESP){
+        return -1;
+    }
+    if(key_value.key == 999){
         return -2;
     }
 

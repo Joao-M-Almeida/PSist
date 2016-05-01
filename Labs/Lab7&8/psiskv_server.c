@@ -92,8 +92,13 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
         printf("Value received: %s\n", (char *) item );
     #endif
 
-    /*TODO: Define functions to create and delete the items in these structs */
-    value_struct * to_store = create_struct( value_len, item );
+    value_struct * to_store = create_struct(value_len, item );
+
+
+    kv_msg message;
+    message.type = WRITE_RESP;
+    message.key = 0;
+    message.value_len = 0;
 
     /*Insert the item on the hash store*/
     err = insert_item(store,to_store,key,overwrite, destroy_struct);
@@ -102,13 +107,17 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
     #endif
     if(err < 0){
         return err;
+    }else if (err == 1){
+        /*already exists and didn't overwrite*/
+        message.key = 999;
+        #ifdef DEBUG
+            printf("Item already exists and didn't overwrite\n");
+        #endif
     }
 
+
+
     /*Send the response*/
-    kv_msg message;
-    message.type = WRITE_RESP;
-    message.key = 0;
-    message.value_len = 0;
     if(TCPsend(kv_descriptor, (uint8_t *) &message, sizeof(message))==-1){
         return -1;
     }
