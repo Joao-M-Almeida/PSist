@@ -97,12 +97,13 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
 
     /*Insert the item on the hash store*/
     err = insert_item(store,to_store,key,overwrite, destroy_struct);
-    if(err < 0){
-        return err;
-    }
     #ifdef DEBUG
         printf("insert_item returned %d\n", err);
     #endif
+    if(err < 0){
+        return err;
+    }
+
     /*Send the response*/
     kv_msg message;
     message.type = WRITE_RESP;

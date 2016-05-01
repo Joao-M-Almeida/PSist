@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -pedantic -ansi -std=gnu99 -g
-DEPS = debug.h item.h phash-lib.h inetutils.h psiskv.h psiskv_server.h TCPlib.h
-OBJ = kvserver.o phash-lib.o inetutils.o psiskv_lib.o psiskv_server.o TCPlib.o
+DEPS = debug.h item.h phash-lib.h inetutils.h TCPlib.h psiskv.h psiskv_server.h
+OBJ = kvserver.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o
 CLIENT = client.o inetutils.o psiskv_lib.o TCPlib.o
 CLI1 = cli-exe-1.o psiskv_lib.o  inetutils.o TCPlib.o
 CLI1PAR = cli-exe-par-1.o psiskv_lib.o inetutils.o TCPlib.o

@@ -1,10 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "phash-lib.h"
-
-/*hash_table create_hash(uint32_t size){
-    return (hash_item**) calloc(size, sizeof( hash_item* ));
-}*/
+/*#include "debug.h"*/
 
 hash_table * create_hash(uint32_t size){
     hash_table * hash = (hash_table *) malloc(sizeof(hash_table));
@@ -35,6 +32,7 @@ void delete_hitem(hash_item *item, void (*delete_func) (Item)){
     pthread_rwlock_unlock(&item->lock);
 
     /*TODO: We have to delete the rwlock?*/
+    pthread_rwlock_destroy(&item->lock);
 
     free(item);
     return;
@@ -122,7 +120,7 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, void 
             #endif
         } else {
             #ifdef DEBUG
-                printf("Item with key %d already exists with value %s; overwrite: %d\n", key, (char *)aux->item, overwrite);
+                printf("Item with key %d already exists; overwrite: %d\n", key, overwrite);
             #endif
             if(overwrite){
                 #ifdef DEBUG
@@ -134,7 +132,8 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, void 
                 aux->item = item;
                 pthread_rwlock_unlock(&aux->lock);
             }else{
-                return -2;
+                /*Item already exists*/
+                return 1;
             }
         }
     }
