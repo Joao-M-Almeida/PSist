@@ -3,17 +3,24 @@
 #include "phash-lib.h"
 /*#include "debug.h"*/
 
+/*
+    Create Hash table, allocating the memory for the lists and the list mutexes, initializing the mutexes
+*/
 hash_table * create_hash(uint32_t size){
     hash_table * hash = (hash_table *) malloc(sizeof(hash_table));
     hash->table = (hash_item**) calloc(size, sizeof( hash_item* ));
     hash->size = size;
-    hash->locks =   (pthread_rwlock_t**) malloc(sizeof(pthread_rwlock_t*)*size);
+    hash->locks = (pthread_rwlock_t**) malloc(sizeof(pthread_rwlock_t*)*size);
     for(unsigned int i = 0; i < size; i++){
         hash->locks[i] = (pthread_rwlock_t*) malloc(sizeof(pthread_rwlock_t));
         pthread_rwlock_init(hash->locks[i],NULL);
     }
     return hash;
 }
+
+/*
+    Create the hash_item and init the mutex
+*/
 
 hash_item *create_hitem(uint32_t key, Item item){
     hash_item *new_hitem;
@@ -25,6 +32,9 @@ hash_item *create_hitem(uint32_t key, Item item){
     return new_hitem;
 }
 
+/*
+    Delete the hash_item->item, the mutex and the hash_item
+*/
 void delete_hitem(hash_item *item, void (*delete_func) (Item)){
     /*TODO: do we need to lock on deletion?*/
     pthread_rwlock_wrlock(&item->lock);
@@ -38,6 +48,10 @@ void delete_hitem(hash_item *item, void (*delete_func) (Item)){
     return;
 }
 
+/*
+    Delete the entire hash table.
+First each item, then the locks then the hash
+*/
 void delete_hash(hash_table * hash, void (*delete_func) (Item)){
     uint32_t i;
     hash_item *curr, *next;
@@ -60,11 +74,17 @@ void delete_hash(hash_table * hash, void (*delete_func) (Item)){
     free(hash);
     return;
 }
-
+/*
+    Hash function
+    TODO: turn this into a MACRO?
+*/
 uint hash_function(uint32_t key, uint32_t size){
     return (uint) (key%size);
 }
-
+/*
+    Find the item and then if it exists return the pointer to it.
+    TODO: return copy instead of pointer
+*/
 Item read_item(hash_table * hash, uint32_t key){
     uint32_t index = hash_function(key, hash->size);
     hash_item *aux_hitem;
@@ -87,6 +107,10 @@ Item read_item(hash_table * hash, uint32_t key){
     return NULL;
 }
 
+/*
+    Find if item already exists, overwrite if specified.
+    If it doesn't exist insert the new item
+*/
 int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, void (*delete_func) (Item)){
     uint32_t index = hash_function(key, hash->size);
     hash_item *aux;
@@ -140,6 +164,9 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, void 
     return 0;
 }
 
+/*
+    Find item, if it exists delete it
+*/
 bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
     uint32_t index = hash_function(key, hash->size);
     hash_item *curr, *next;
