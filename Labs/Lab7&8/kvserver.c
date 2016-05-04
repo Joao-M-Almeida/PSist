@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#define STORESIZE 200
+#define STORESIZE 11
 #define DEFAULTPORT 9999
 #define MAXCLIENTS 5
 

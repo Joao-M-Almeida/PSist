@@ -2,7 +2,7 @@
 #include "phash-lib.h"
 #include "psiskv_server.h"
 #include "TCPlib.h"
-/*#include "debug.h"*/
+#include "debug.h"
 #include <stdlib.h>
 #include <stdio.h>
 

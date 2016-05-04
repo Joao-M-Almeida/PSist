@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "phash-lib.h"
-/*#include "debug.h"*/
+#include "debug.h"
 
 /*
     Create Hash table, allocating the memory for the lists and the list mutexes, initializing the mutexes
@@ -37,9 +37,9 @@ hash_item *create_hitem(uint32_t key, Item item){
 */
 void delete_hitem(hash_item *item, void (*delete_func) (Item)){
     /*TODO: do we need to lock on deletion?*/
-    pthread_rwlock_wrlock(&item->lock);
+    /*pthread_rwlock_wrlock(&item->lock);*/
     delete_func(item->item);
-    pthread_rwlock_unlock(&item->lock);
+    /*pthread_rwlock_unlock(&item->lock);*/
 
     /*TODO: We have to delete the rwlock?*/
     pthread_rwlock_destroy(&item->lock);
@@ -96,12 +96,12 @@ Item read_item(hash_table * hash, uint32_t key){
         aux_hitem = aux_hitem->next);
 
     if(aux_hitem != NULL){
-        pthread_rwlock_rdlock(&aux_hitem->lock);
+        /*pthread_rwlock_rdlock(&aux_hitem->lock);*/
         /* TODO: função para copiar
             Return copy of item instead of a pointer to it
         */
         item = aux_hitem->item;
-        pthread_rwlock_unlock(&aux_hitem->lock);
+        /*pthread_rwlock_unlock(&aux_hitem->lock);*/
         return item;
     }
     return NULL;
@@ -133,14 +133,18 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, void 
             aux = aux->next){
                 /*search list untill end or untill finding key*/
                 #ifdef DEBUG
-                    printf("item in list with key: %d\n", aux->key);
+                    printf("Searching... Found Item with key: %d\n", aux->key);
                 #endif
         }
-        if(!aux->next){
-            /*End of list reached insert item at the end*/
+        #ifdef DEBUG
+            printf("Stopped at Item with key: %d\n", aux->key);
+        #endif
+        /* Check if found item or not*/
+        if(aux->key != key){
+            /*didn't find, so is at end of list*/
             aux->next = create_hitem(key, item);
             #ifdef DEBUG
-                printf("Inserting Item at end of list");
+                printf("Inserting Item at end of list\n");
             #endif
         } else {
             #ifdef DEBUG
@@ -150,11 +154,11 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, void 
                 #ifdef DEBUG
                     printf("Overwriting item");
                 #endif
-                pthread_rwlock_wrlock(&aux->lock);
+                /*pthread_rwlock_wrlock(&aux->lock);*/
                 /*TODO: check if correct*/
                 delete_func(aux->item);
                 aux->item = item;
-                pthread_rwlock_unlock(&aux->lock);
+                /*pthread_rwlock_unlock(&aux->lock);*/
             }else{
                 /*Item already exists*/
                 return 1;
