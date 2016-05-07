@@ -53,7 +53,7 @@ int proxy_handler(int sock_fd){
     kv_msg key_value;
     uint8_t * to_recv = (uint8_t *) &key_value;
     bool stop = false;
-    int data_server_fd = create_ds_stub();
+    int ds_fd = create_ds_stub();
 
     while(!stop){
         int cmd = TCPrecv(sock_fd, to_recv, sizeof(kv_msg));
@@ -72,24 +72,28 @@ int proxy_handler(int sock_fd){
                     printf("Received WRITE_REQ\n");
                 #endif
                 /*TODO: enviar pedido de escrita sem overwrite */
+                TCPsend(ds_fd, to_recv, sizeof(kv_msg));
                 break;
             case WRITE_REQ_OW:
                 #ifdef DEBUG
                     printf("Received WRITE_REQ_OW\n");
                 #endif
                 /*TODO: enviar pedido de escrita com overwrite */
+                TCPsend(ds_fd, to_recv, sizeof(kv_msg));
                 break;
             case READ_REQ:
                 #ifdef DEBUG
                     printf("Received READ_REQ\n");
                 #endif
                 /*TODO: enviar pedido de leitura */
+                TCPsend(ds_fd, to_recv, sizeof(kv_msg));
                 break;
             case DELETE_REQ:
                 #ifdef DEBUG
                     printf("Received DELETE_REQ\n");
                 #endif
                 /*TODO: enviar pedido de remoção */
+                TCPsend(ds_fd, to_recv, sizeof(kv_msg));
                 break;
             default:
                 return -1;
