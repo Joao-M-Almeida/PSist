@@ -5,6 +5,7 @@
 #include "debug.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 int process_psiskv_prequest(int kv_descriptor, hash_table * store){
 
@@ -71,6 +72,18 @@ value_struct * create_struct( unsigned int size, uint8_t *value ){
     vs->value = value;
     return vs;
 }
+
+value_struct * copy_struct( void * to_copy ){
+    value_struct * to_cpy = (value_struct * ) to_copy;
+    value_struct * vs;
+    vs = (value_struct *) malloc(sizeof(value_struct));
+    vs->size = to_cpy->size;
+    vs->value = (uint8_t *) malloc(sizeof(uint8_t) * to_cpy->size);
+    memcpy(vs->value, to_cpy->value, to_cpy->size);
+
+    return vs;
+}
+
 
 void destroy_struct(void * void_to_destroy) {
     /*TODO: not sure if this is the correct way*/

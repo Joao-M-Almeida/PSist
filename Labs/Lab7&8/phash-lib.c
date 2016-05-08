@@ -26,7 +26,7 @@ hash_item *create_hitem(uint32_t key, Item item){
     hash_item *new_hitem;
     new_hitem = (hash_item*) malloc(sizeof(hash_item));
     new_hitem->key = key;
-    pthread_rwlock_init(&new_hitem->lock, NULL);
+    pthread_rwlock_init(&new_hitem->lock, NULL); /*TODO: is this needed*/
     new_hitem->item = item;
     new_hitem->next = NULL;
     return new_hitem;
@@ -101,6 +101,7 @@ Item read_item(hash_table * hash, uint32_t key){
             Return copy of item instead of a pointer to it
         */
         item = aux_hitem->item;
+        /*TODO: I need a copy function*/
         /*pthread_rwlock_unlock(&aux_hitem->lock);*/
         return item;
     }
