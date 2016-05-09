@@ -49,7 +49,7 @@ void delete_hitem(hash_item *item, void (*delete_func) (Item)){
 }
 
 /*
-    Delete the entire hash table.
+Delete the entire hash table.
 First each item, then the locks then the hash
 */
 void delete_hash(hash_table * hash, void (*delete_func) (Item)){
@@ -74,6 +74,7 @@ void delete_hash(hash_table * hash, void (*delete_func) (Item)){
     free(hash);
     return;
 }
+
 /*
     Hash function
     TODO: turn this into a MACRO?
@@ -81,45 +82,55 @@ void delete_hash(hash_table * hash, void (*delete_func) (Item)){
 uint hash_function(uint32_t key, uint32_t size){
     return (uint) (key%size);
 }
+
 /*
     Find the item and then if it exists return the pointer to it.
-    TODO: return copy instead of pointer
 */
 Item read_item(hash_table * hash, uint32_t key,  Item (*copy_func) (Item)){
     uint32_t index = hash_function(key, hash->size);
     hash_item *aux_hitem;
     Item item;
 
-    /*TODO: lock for read hashlock*/
+    pthread_rwlock_rdlock(hash->locks[index]);
     for(aux_hitem = hash->table[index];
         aux_hitem != NULL && aux_hitem->key != key;
         aux_hitem = aux_hitem->next);
 
     if(aux_hitem != NULL){
-        /*pthread_rwlock_rdlock(&aux_hitem->lock);*/
-        /* TODO: função para copiar
-            Return copy of item instead of a pointer to it
-        */
+        /* Return copy of item instead of a pointer to it */
         item = copy_func(aux_hitem->item);
-        /*pthread_rwlock_unlock(&aux_hitem->lock);*/
+        pthread_rwlock_unlock(hash->locks[index]);
         return item;
     }
+    pthread_rwlock_unlock(hash->locks[index]);
     return NULL;
 }
 
 /*
     Find if item already exists, overwrite if specified.
     If it doesn't exist insert the new item
+    TODO: optimize critical sections: for instance remove create item from critical section and item deletion (in overwrite)
 */
 int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, void (*delete_func) (Item)){
     uint32_t index = hash_function(key, hash->size);
     hash_item *aux;
+    #ifdef DEBUG
+        printf("Insert trying to lock\n");
+    #endif
+    pthread_rwlock_wrlock(hash->locks[index]);
+    #ifdef DEBUG
+        printf("Insert locked\n");
+    #endif
     if(!hash->table[index]){
         /*No item in this index*/
         #ifdef DEBUG
             printf("Inserting Item at the begining of empty list\n");
         #endif
         hash->table[index] = create_hitem(key, item);
+        pthread_rwlock_unlock(hash->locks[index]);
+        #ifdef DEBUG
+            printf("Insert unlocked\n");
+        #endif
     } else {
         if( hash->table[index]->next == NULL){
             /*Useless if, list has only one element*/
@@ -160,29 +171,34 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, void 
                 aux->item = item;
                 /*pthread_rwlock_unlock(&aux->lock);*/
             }else{
+                pthread_rwlock_unlock(hash->locks[index]);
                 /*Item already exists*/
                 return 1;
             }
         }
+        pthread_rwlock_unlock(hash->locks[index]);
     }
     return 0;
 }
 
 /*
     Find item, if it exists delete it
+    TODO: optimize critical sections
 */
 bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
     uint32_t index = hash_function(key, hash->size);
     hash_item *curr, *next;
+
+    pthread_rwlock_wrlock(hash->locks[index]);
     if(!hash->table[index]){
         /*No item on that index*/
+        pthread_rwlock_unlock(hash->locks[index]);
         return false;
     }else if(hash->table[index]->key == key){
         next = hash->table[index]->next;
         delete_hitem(hash->table[index], delete_func);
         hash->table[index] = next;
     }else{
-        /*TODO: lock for write hashlock*/
         for(curr = hash->table[index], next = curr->next;
             next != NULL && next->key != key;
             curr = next, next = curr->next );
@@ -191,8 +207,10 @@ bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
             delete_hitem(next, delete_func);
         }else{
             /*Item not present*/
+            pthread_rwlock_unlock(hash->locks[index]);
             return false;
         }
     }
+    pthread_rwlock_unlock(hash->locks[index]);
     return true;
 }
