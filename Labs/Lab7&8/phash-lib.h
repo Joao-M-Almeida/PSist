@@ -28,7 +28,7 @@ typedef struct _hash_table{
 hash_table * create_hash(uint32_t size);
 void delete_hash(hash_table * hash, void (*delete_func) (Item));
 uint32_t hash_function(uint32_t key, uint32_t size);
-Item read_item(hash_table * hash, uint32_t key);
+Item read_item(hash_table * hash, uint32_t key, Item (*copy_func) (Item));
 int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, void (*delete_func) (Item));
 bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item));
 #endif

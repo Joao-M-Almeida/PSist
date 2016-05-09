@@ -85,7 +85,7 @@ uint hash_function(uint32_t key, uint32_t size){
     Find the item and then if it exists return the pointer to it.
     TODO: return copy instead of pointer
 */
-Item read_item(hash_table * hash, uint32_t key){
+Item read_item(hash_table * hash, uint32_t key,  Item (*copy_func) (Item)){
     uint32_t index = hash_function(key, hash->size);
     hash_item *aux_hitem;
     Item item;
@@ -100,8 +100,7 @@ Item read_item(hash_table * hash, uint32_t key){
         /* TODO: função para copiar
             Return copy of item instead of a pointer to it
         */
-        item = aux_hitem->item;
-        /*TODO: I need a copy function*/
+        item = copy_func(aux_hitem->item);
         /*pthread_rwlock_unlock(&aux_hitem->lock);*/
         return item;
     }

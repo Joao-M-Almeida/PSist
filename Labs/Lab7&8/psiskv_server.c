@@ -73,7 +73,7 @@ value_struct * create_struct( unsigned int size, uint8_t *value ){
     return vs;
 }
 
-value_struct * copy_struct( void * to_copy ){
+Item copy_struct( void * to_copy ){
     value_struct * to_cpy = (value_struct * ) to_copy;
     value_struct * vs;
     vs = (value_struct *) malloc(sizeof(value_struct));
@@ -142,7 +142,7 @@ int read_preq(hash_table * store, int kv_descriptor, uint32_t key){
 
     value_struct * to_send;
 
-    to_send = (value_struct *) read_item(store, key);
+    to_send = (value_struct *) read_item(store, key, copy_struct);
 
     if(to_send == NULL){
         #ifdef DEBUG
@@ -177,6 +177,8 @@ int read_preq(hash_table * store, int kv_descriptor, uint32_t key){
     if(TCPsend(kv_descriptor, to_send->value, to_send->size)==-1){
         return -1;
     }
+
+    destroy_struct(to_send);
 
     return 0;
 }
