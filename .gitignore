@@ -33,3 +33,6 @@
 
 # PDFs
 *.pdf
+
+# Data files
+*.data
