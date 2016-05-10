@@ -5,17 +5,17 @@ OBJ = front-server.o data-server.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o
 EDITOR = gedit
 
 main: $(OBJ)
-    $(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@
 
 %.o: %.c $(DEPS)
-    $(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 c:
-    clear
-    rm *.o
+	clear
+	rm *.o
 
 o:
-    $(EDITOR) dd.c *.c *.h makefile &
+	$(EDITOR) dd.c *.c *.h makefile &
 
 
 
