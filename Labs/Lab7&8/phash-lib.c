@@ -214,3 +214,84 @@ bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
     pthread_rwlock_unlock(hash->locks[index]);
     return true;
 }
+
+/*First version of backup, inefficient*/
+int backup_hash(hash_table * hash, char * path, char * (*to_str) (Item)){
+    hash_item * aux;
+    FILE * backup = fopen(path, "w");
+    char * str_aux;
+    if(backup == NULL){
+        return -1;
+    }
+    #ifdef DEBUG
+        printf("Starting Backup\n");
+    #endif
+    for(unsigned int i; i<hash->size; i++){
+        if(hash->table[i] != NULL){
+            aux = hash->table[i];
+            do {
+                str_aux = to_str(aux->item);
+                /*this approach has problems with white space and related chars, should post size*/
+                fprintf(backup, "K: %d, V: %s\n", aux->key, str_aux);
+                /*TODO: use writes instead of prints, and compact the data*/
+                #ifdef DEBUG
+                    printf("K: %d, V: %s\n", aux->key, str_aux);
+                #endif
+                free(str_aux);
+                aux = aux->next;
+            } while(aux!= NULL);
+        }
+    }
+    #ifdef DEBUG
+        printf("Finished Backup\n");
+    #endif
+    fclose(backup);
+    return 0;
+}
+
+
+/*
+    Create Hash table, allocating the memory for the lists and the list mutexes, initializing the mutexes
+    and then initialize it from backup
+*/
+hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*item_from_str) (char *), void (*delete_func) (Item)){
+    hash_table * hash = (hash_table *) malloc(sizeof(hash_table));
+    hash->table = (hash_item**) calloc(size, sizeof( hash_item* ));
+    hash->size = size;
+    hash->locks = (pthread_rwlock_t**) malloc(sizeof(pthread_rwlock_t*)*size);
+    for(unsigned int i = 0; i < size; i++){
+        hash->locks[i] = (pthread_rwlock_t*) malloc(sizeof(pthread_rwlock_t));
+        pthread_rwlock_init(hash->locks[i],NULL);
+    }
+
+    FILE * backup = fopen(path, "r");
+    if(backup == NULL){
+        return NULL;
+    }
+    #ifdef DEBUG
+        printf("Reading Backup\n");
+    #endif
+    char aux[1024];
+
+    char str[1024];
+    uint32_t key;
+    while (fgets(aux, 1024, backup) != NULL) {
+        /* This is doing some extra loops because of \n stored on the DB.
+        TODO: change storage method */
+        sscanf(aux,"K: %u, V: %s", &key, str);
+        /*
+        TODO: use optimize item creation
+        */
+        #ifdef DEBUG
+            printf("K: %d, V: %s\n", key, str);
+            printf("AUX: %s\n", aux);
+        #endif
+        insert_item(hash, item_from_str(str), key, 0, delete_func);
+    }
+
+    #ifdef DEBUG
+        printf("Finished Reading Backup\n");
+    #endif
+    fclose(backup);
+    return hash;
+}

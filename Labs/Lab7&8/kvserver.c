@@ -16,6 +16,7 @@
 #define STORESIZE 11
 #define DEFAULTPORT 9999
 #define MAXCLIENTS 5
+#define BACKUP_PATH "backup.data"
 
 /*
 Server to handle acess to the Key Value store. Only serves a client at a time.
@@ -41,6 +42,7 @@ struct arguments *args;
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
+    backup_hash(kv_store, (char *) BACKUP_PATH, struct_to_str);
     delete_hash(kv_store, destroy_struct);
     free(args);
     TCPclose(server);
@@ -104,7 +106,10 @@ int main(int argc, char const *argv[]) {
     }
 
     /*Create Hash Table*/
-    kv_store =  create_hash(STORESIZE);
+    kv_store = create_hash_from_backup(STORESIZE, (char *) BACKUP_PATH, create_struct_from_str, destroy_struct);
+    if( kv_store == NULL){
+        kv_store =  create_hash(STORESIZE);
+    }
 
     /*Create arguments structure*/
     args = (struct arguments *) malloc(sizeof(struct arguments));

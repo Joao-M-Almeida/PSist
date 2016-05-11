@@ -92,6 +92,31 @@ void destroy_struct(void * void_to_destroy) {
     free(to_destroy);
 }
 
+char * struct_to_str(void * void_to_str){
+    value_struct * to_str = (value_struct * ) void_to_str;
+    char * str = (char *) malloc(sizeof(char) * (to_str->size+1));
+    strncpy(str, (char *) to_str->value, to_str->size);
+    str[to_str->size] = '\0';
+    return str;
+}
+
+/*Str is \0 terminated*/
+void * create_struct_from_str( char * str){
+    value_struct * vs;
+    vs = (value_struct *) malloc(sizeof(value_struct));
+    int size = strlen(str);
+    uint8_t * value = (uint8_t *) malloc(sizeof(uint8_t)*size);
+
+    /*TODO: copy from str to value*/
+
+    memcpy(value, str,size);
+
+    vs->size = size;
+    vs->value = value;
+    return vs;
+}
+
+
 int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int value_len, int overwrite){
     int err;
     /*Now read value_len bytes from the socket*/
