@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include "phash-lib.h"
 #include "debug.h"
-
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
 /*
     Create Hash table, allocating the memory for the lists and the list mutexes, initializing the mutexes
 */
@@ -216,7 +220,7 @@ bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
 }
 
 /*First version of backup, inefficient*/
-int backup_hash(hash_table * hash, char * path, char * (*to_str) (Item)){
+int backup_hash(hash_table * hash, char * path, char * (*to_str) (Item), uint32_t (*get_size) (Item) ){
     hash_item * aux;
     FILE * backup = fopen(path, "w");
     char * str_aux;
@@ -231,11 +235,10 @@ int backup_hash(hash_table * hash, char * path, char * (*to_str) (Item)){
             aux = hash->table[i];
             do {
                 str_aux = to_str(aux->item);
-                /*this approach has problems with white space and related chars, should post size*/
-                fprintf(backup, "K: %d, V: %s\n", aux->key, str_aux);
+                fprintf(backup, "%u %u %s", aux->key, get_size(aux->item), str_aux);
                 /*TODO: use writes instead of prints, and compact the data*/
                 #ifdef DEBUG
-                    printf("K: %d, V: %s\n", aux->key, str_aux);
+                    printf("K: %u, S:%u, V: %s\n", aux->key, get_size(aux->item), str_aux);
                 #endif
                 free(str_aux);
                 aux = aux->next;
@@ -264,34 +267,64 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*item_f
         pthread_rwlock_init(hash->locks[i],NULL);
     }
 
-    FILE * backup = fopen(path, "r");
-    if(backup == NULL){
+    int backup = open(path,0, "r");
+    if(backup == -1){
         return NULL;
     }
     #ifdef DEBUG
         printf("Reading Backup\n");
     #endif
-    char aux[1024];
-
+    char buf[1024];
     char str[1024];
+    char * aux;
+    char * aux2;
     uint32_t key;
-    while (fgets(aux, 1024, backup) != NULL) {
-        /* This is doing some extra loops because of \n stored on the DB.
-        TODO: change storage method */
-        sscanf(aux,"K: %u, V: %s", &key, str);
-        /*
-        TODO: use optimize item creation
-        */
-        #ifdef DEBUG
-            printf("K: %d, V: %s\n", key, str);
-            printf("AUX: %s\n", aux);
-        #endif
-        insert_item(hash, item_from_str(str), key, 0, delete_func);
+    uint32_t val_size;
+    Item item_aux;
+    while (read(backup, buf, 1024) > 0) {
+
+        sscanf(buf,"%u %u ",&key, &val_size);
+
+        aux = strchr(buf,' ');
+        aux = strchr(aux,' ');
+        aux+=1;
+
+        if(aux-buf>val_size){
+            /*already read all value*/
+            aux2 = (char *) malloc(sizeof(char)*(val_size+1));
+            strncpy(aux2, aux, val_size);
+            aux2[val_size]='\0';
+            item_aux =item_from_str(aux2);
+            free(aux2);
+            aux+=val_size;
+        }
+
+
+            #ifdef DEBUG
+                printf("K: %d, V: %s\n", key, str);
+                printf("AUX: %s\n", buf);
+            #endif
+
+            insert_item(hash, item_aux, key, 0, delete_func);
+
     }
+
+
+    /*
+    while (fgets(aux, 1024, backup) != NULL) {
+        if(sscanf(aux,"K: %u, V: %s", &key, str)==2){
+            #ifdef DEBUG
+                printf("K: %d, V: %s\n", key, str);
+                printf("AUX: %s\n", aux);
+            #endif
+            insert_item(hash, item_from_str(str), key, 0, delete_func);
+        }
+    }
+    */
 
     #ifdef DEBUG
         printf("Finished Reading Backup\n");
     #endif
-    fclose(backup);
+    close(backup);
     return hash;
 }
