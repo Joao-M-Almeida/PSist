@@ -4,7 +4,7 @@
 #ifndef _PSISKV_H
 #define _PSISKV_H
 
-#define BUF_LEN 100
+#define BUF_LEN 10000
 typedef enum msg_type {
     WRITE_REQ,
     WRITE_REQ_OW,

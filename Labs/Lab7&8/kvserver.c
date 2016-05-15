@@ -42,7 +42,7 @@ struct arguments *args;
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
-    backup_hash(kv_store, (char *) BACKUP_PATH, struct_to_str);
+    backup_hash(kv_store, (char *) BACKUP_PATH, struct_to_str, struct_get_size);
     delete_hash(kv_store, destroy_struct);
     free(args);
     TCPclose(server);
@@ -106,7 +106,7 @@ int main(int argc, char const *argv[]) {
     }
 
     /*Create Hash Table*/
-    kv_store = create_hash_from_backup(STORESIZE, (char *) BACKUP_PATH, create_struct_from_str, destroy_struct);
+    kv_store = create_hash_from_backup(STORESIZE, (char *) BACKUP_PATH, create_struct, destroy_struct);
     if( kv_store == NULL){
         kv_store =  create_hash(STORESIZE);
     }

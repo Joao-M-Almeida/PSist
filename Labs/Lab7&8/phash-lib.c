@@ -235,10 +235,10 @@ int backup_hash(hash_table * hash, char * path, char * (*to_str) (Item), uint32_
             aux = hash->table[i];
             do {
                 str_aux = to_str(aux->item);
-                fprintf(backup, "%u %u %s", aux->key, get_size(aux->item), str_aux);
-                /*TODO: use writes instead of prints, and compact the data*/
+                fprintf(backup, "%u %u ", aux->key, get_size(aux->item));
+                fwrite(str_aux,sizeof(char),get_size(aux->item),backup);
                 #ifdef DEBUG
-                    printf("K: %u, S:%u, V: %s\n", aux->key, get_size(aux->item), str_aux);
+                    printf("K: %u, S:%u, V:%s\n", aux->key, get_size(aux->item), str_aux);
                 #endif
                 free(str_aux);
                 aux = aux->next;
@@ -257,7 +257,7 @@ int backup_hash(hash_table * hash, char * path, char * (*to_str) (Item), uint32_
     Create Hash table, allocating the memory for the lists and the list mutexes, initializing the mutexes
     and then initialize it from backup
 */
-hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*item_from_str) (char *), void (*delete_func) (Item)){
+hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*create_func) (unsigned int ,uint8_t *), void (*delete_func) (Item)){
     hash_table * hash = (hash_table *) malloc(sizeof(hash_table));
     hash->table = (hash_item**) calloc(size, sizeof( hash_item* ));
     hash->size = size;
@@ -274,40 +274,98 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*item_f
     #ifdef DEBUG
         printf("Reading Backup\n");
     #endif
-    char buf[1024];
-    char str[1024];
+
+    char * buf = (char *) malloc(sizeof(char)*(1024+1));
+    char * buf2 = (char *) malloc(sizeof(char)*(1024+1));
     char * aux;
     char * aux2;
+    char * aux3;
     uint32_t key;
     uint32_t val_size;
     Item item_aux;
-    while (read(backup, buf, 1024) > 0) {
-
-        sscanf(buf,"%u %u ",&key, &val_size);
-
-        aux = strchr(buf,' ');
-        aux = strchr(aux,' ');
-        aux+=1;
-
-        if(aux-buf>val_size){
-            /*already read all value*/
-            aux2 = (char *) malloc(sizeof(char)*(val_size+1));
-            strncpy(aux2, aux, val_size);
-            aux2[val_size]='\0';
-            item_aux =item_from_str(aux2);
-            free(aux2);
-            aux+=val_size;
-        }
-
-
+    int l;
+    int k;
+    k = read(backup, buf, 1024);
+    buf[k]='\0'; /*Needed?*/
+    aux = buf;
+    while(1){
+        while(sscanf(aux,"%u %u %n",&key, &val_size, &l)>=2){
+            aux+=l;
             #ifdef DEBUG
-                printf("K: %d, V: %s\n", key, str);
-                printf("AUX: %s\n", buf);
+                printf("K: %d, S: %d\n", key, val_size);
             #endif
+            if(buf+1024-aux >= val_size){
+                aux2 = (char *) malloc(sizeof(char)*(val_size+1));
+                strncpy(aux2, aux, val_size);
+                aux2[val_size]='\0';
+                item_aux = create_func(val_size, (uint8_t *) aux2);
+                insert_item(hash, item_aux, key, 0, delete_func);
+                #ifdef DEBUG
+                    printf("K: %d, V: %s\n", key, aux2);
+                #endif
+                aux+=val_size;
+            }else{
+                aux2 = (char *) malloc(sizeof(char)*(val_size+1));
+                strncpy(aux2, aux, buf+1024-aux);
+                aux3 = aux2 + (buf + 1024 - aux);
+                read(backup, aux3, val_size-(buf+1024-aux));
+                aux2[val_size]='\0';
+                item_aux =create_func(val_size, (uint8_t *) aux2);
+                insert_item(hash, item_aux, key, 0, delete_func);
+                #ifdef DEBUG
+                    printf("K: %d, V: %s\n", key, aux2);
+                #endif
+                k = read(backup, buf, 1024);
+                buf[k]='\0'; /*Needed?*/
+                aux = buf;
+            }
+        }
+        if(aux!=buf){
+            l=aux-buf;
+            strncpy(buf2,aux,l);
+            aux2 = buf2+l;
+            k = read(backup, aux2, 1024-l);
+            if(k==0){
+                break;
+            }
+            aux3 = buf2;
+            buf2 = buf;
+            buf = aux3;
 
-            insert_item(hash, item_aux, key, 0, delete_func);
-
+            buf[1024]='\0'; /*Needed?*/
+            aux = buf;
+        }else{
+            break;
+        }
     }
+
+
+    /*while (read(backup, buf, 1024) > 0) {
+        aux = buf;
+        while (sscanf(aux,"%u %u ",&key, &val_size)==2){
+
+            aux = strchr(buf,' ');
+            aux = strchr(aux,' ');
+            aux+=1;
+
+            if(aux-buf>val_size){
+                aux2 = (char *) malloc(sizeof(char)*(val_size+1));
+                strncpy(aux2, aux, val_size);
+                aux2[val_size]='\0';
+                item_aux =item_from_str(aux2);
+                insert_item(hash, item_aux, key, 0, delete_func);
+                #ifdef DEBUG
+                    printf("K: %d, V: %s\n", key, aux2);
+                    printf("BUF: %s\n", buf);
+                #endif
+                free(aux2);
+                aux+=val_size;
+            }else{
+                aux2 = (char *) malloc(sizeof(char)*(val_size-(aux-buf)+1));
+
+            }
+        }
+    }*/
 
 
     /*
@@ -321,7 +379,8 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*item_f
         }
     }
     */
-
+    free(buf);
+    free(buf2);
     #ifdef DEBUG
         printf("Finished Reading Backup\n");
     #endif

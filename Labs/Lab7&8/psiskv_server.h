@@ -9,7 +9,7 @@ typedef struct _value_struct {
     uint8_t * value;
     uint32_t size;
 } value_struct;
-value_struct * create_struct( unsigned int size, uint8_t *value );
+void * create_struct( unsigned int size, uint8_t *value );
 void destroy_struct(void * to_destroy);
 Item copy_struct( void * to_copy );
 char * struct_to_str(void * void_to_str);

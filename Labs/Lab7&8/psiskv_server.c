@@ -65,7 +65,7 @@ int process_psiskv_prequest(int kv_descriptor, hash_table * store){
 /* deve receber mais uma função para criação correcta do item */
 /* deve receber mais uma função, que deve guardar como argumento,
     para a destruição do item*/
-value_struct * create_struct( unsigned int size, uint8_t *value ){
+void * create_struct( unsigned int size, uint8_t *value ){
     value_struct * vs;
     vs = (value_struct *) malloc(sizeof(value_struct));
     vs->size = size;
@@ -106,13 +106,21 @@ STR Format:
 SIZE VALUE\0
 */
 
-char * struct_to_str(void * void_to_str){
+/*char * struct_to_str(void * void_to_str){
     value_struct * to_str = (value_struct * ) void_to_str;
     char size_str[100];
     sprintf(size_str, "%u",to_str->size);
     char * str = (char *) malloc(sizeof(char) * ( strlen(size_str) + to_str->size+2));
     sprintf(str, "%u %s", to_str->size, (char *) to_str->value);
     str[strlen(size_str) + to_str->size+2] = '\0';
+    return str;
+}*/
+
+char * struct_to_str(void * void_to_str){
+    value_struct * to_str = (value_struct * ) void_to_str;
+    char * str = (char *) malloc(sizeof(char) * ( to_str->size+1));
+    strncpy(str, (char *) to_str->value, to_str->size);
+    str[to_str->size] = '\0';
     return str;
 }
 
@@ -152,7 +160,7 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
         printf("Value received: %s\n", (char *) item );
     #endif
 
-    value_struct * to_store = create_struct(value_len, item );
+    value_struct * to_store = (value_struct *) create_struct(value_len, item );
 
 
     kv_msg message;
