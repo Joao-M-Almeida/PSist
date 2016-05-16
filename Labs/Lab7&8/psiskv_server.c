@@ -92,30 +92,6 @@ void destroy_struct(void * void_to_destroy) {
     free(to_destroy);
 }
 
-/*
-char * struct_to_str(void * void_to_str){
-    value_struct * to_str = (value_struct * ) void_to_str;
-    char * str = (char *) malloc(sizeof(char) * (to_str->size+1));
-    strncpy(str, (char *) to_str->value, to_str->size);
-    str[to_str->size] = '\0';
-    return str;
-}*/
-
-/*
-STR Format:
-SIZE VALUE\0
-*/
-
-/*char * struct_to_str(void * void_to_str){
-    value_struct * to_str = (value_struct * ) void_to_str;
-    char size_str[100];
-    sprintf(size_str, "%u",to_str->size);
-    char * str = (char *) malloc(sizeof(char) * ( strlen(size_str) + to_str->size+2));
-    sprintf(str, "%u %s", to_str->size, (char *) to_str->value);
-    str[strlen(size_str) + to_str->size+2] = '\0';
-    return str;
-}*/
-
 char * struct_to_str(void * void_to_str){
     value_struct * to_str = (value_struct * ) void_to_str;
     char * str = (char *) malloc(sizeof(char) * ( to_str->size+1));

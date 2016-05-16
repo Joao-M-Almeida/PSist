@@ -220,7 +220,7 @@ bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
 }
 
 /*First version of backup, inefficient*/
-int backup_hash(hash_table * hash, char * path, char * (*to_str) (Item), uint32_t (*get_size) (Item) ){
+int backup_hash(hash_table * hash, char * path, char * (*to_byte_array) (Item), uint32_t (*get_size) (Item) ){
     hash_item * aux;
     FILE * backup = fopen(path, "w");
     char * str_aux;
@@ -234,7 +234,7 @@ int backup_hash(hash_table * hash, char * path, char * (*to_str) (Item), uint32_
         if(hash->table[i] != NULL){
             aux = hash->table[i];
             do {
-                str_aux = to_str(aux->item);
+                str_aux = to_byte_array(aux->item);
                 fprintf(backup, "%u %u ", aux->key, get_size(aux->item));
                 fwrite(str_aux,sizeof(char),get_size(aux->item),backup);
                 #ifdef DEBUG
