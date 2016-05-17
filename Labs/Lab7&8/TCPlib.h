@@ -1,7 +1,7 @@
-#include <stdint.h>
-
 #ifndef _TCPlib_H
 #define _TCPlib_H
+
+#include <stdint.h>
 
 int TCPconnect(unsigned long IP, unsigned short port);
 int TCPsend(int fd, uint8_t *message, unsigned int len);

@@ -106,7 +106,7 @@ int main(int argc, char const *argv[]) {
     }
 
     /*Create Hash Table*/
-    kv_store = create_hash_from_backup(STORESIZE, (char *) BACKUP_PATH, create_struct, destroy_struct);
+    kv_store = create_hash_from_backup(STORESIZE, (char *) BACKUP_PATH, create_struct, destroy_struct, struct_to_str, struct_get_size);
     if( kv_store == NULL){
         kv_store =  create_hash(STORESIZE);
     }

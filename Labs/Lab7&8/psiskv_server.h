@@ -1,8 +1,8 @@
-#include "psiskv.h"
-#include "phash-lib.h"
-
 #ifndef _PSISKV_SERVER_H
 #define _PSISKV_SERVER_H
+
+#include "psiskv.h"
+#include "phash-lib.h"
 
 typedef struct _value_struct {
     uint8_t * value;

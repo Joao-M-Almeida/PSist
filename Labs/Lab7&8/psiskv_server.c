@@ -145,7 +145,7 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
     message.value_len = 0;
 
     /*Insert the item on the hash store*/
-    err = insert_item(store,to_store,key,overwrite, destroy_struct);
+    err = insert_item(store,to_store,key,overwrite, destroy_struct, struct_to_str, struct_get_size);
     #ifdef DEBUG
         printf("insert_item returned %d\n", err);
     #endif

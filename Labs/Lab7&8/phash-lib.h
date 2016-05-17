@@ -1,11 +1,11 @@
+#ifndef _HASH_LIB
+#define _HASH_LIB
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <pthread.h>
 #include "item.h"
 #include "log.h"
-
-#ifndef _HASH_LIB
-#define _HASH_LIB
 
 typedef struct _hash_item {
     struct _hash_item *next;
@@ -31,9 +31,13 @@ hash_table * create_hash(uint32_t size);
 void delete_hash(hash_table * hash, void (*delete_func) (Item));
 uint32_t hash_function(uint32_t key, uint32_t size);
 Item read_item(hash_table * hash, uint32_t key, Item (*copy_func) (Item));
-int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, void (*delete_func) (Item));
+int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite,
+        void (*delete_func) (Item), char * (*to_byte_array) (Item),
+        uint32_t (*get_size) (Item));
 bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item));
 
-int backup_hash(hash_table * hash, char * path , char * (*to_byte_array) (Item), uint32_t (*get_size) (Item));
-hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*create_func) (unsigned int , uint8_t *), void (*delete_func) (Item));
+int backup_hash(hash_table * hash, char * path , char * (*to_byte_array) (Item),
+        uint32_t (*get_size) (Item));
+hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*create_func) (unsigned int ,uint8_t *), void (*delete_func) (Item), char * (*to_byte_array) (Item), uint32_t (*get_size) (Item));
+
 #endif

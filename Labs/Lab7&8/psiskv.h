@@ -1,10 +1,11 @@
-#include <stdint.h>
-#include "item.h"
-
 #ifndef _PSISKV_H
 #define _PSISKV_H
 
+#include <stdint.h>
+#include "item.h"
+
 #define BUF_LEN 10000
+
 typedef enum msg_type {
     WRITE_REQ,
     WRITE_REQ_OW,
