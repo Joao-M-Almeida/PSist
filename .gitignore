@@ -36,3 +36,4 @@
 
 # Data files
 *.data
+*.fuse_hidden*
