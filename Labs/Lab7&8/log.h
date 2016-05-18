@@ -9,6 +9,7 @@
 typedef struct _kv_log {
     FILE * log_fd;
     pthread_mutex_t * lock;
+    char * log_path;
 } kv_log;
 
 kv_log * create_log(char *);
@@ -16,7 +17,7 @@ int log_insert(kv_log * log, uint32_t key, void * to_store, char * (*to_byte_arr
 int log_delete(kv_log * log, uint32_t key);
 int log_lock(kv_log * log);
 int log_unlock(kv_log * log);
-int close_log(kv_log * log);
+int delete_log(kv_log * log);
 
 
 #endif

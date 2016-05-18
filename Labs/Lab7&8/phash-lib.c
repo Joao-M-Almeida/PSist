@@ -73,12 +73,11 @@ void delete_hash(hash_table * hash, void (*delete_func) (Item)){
                 delete_hitem(curr, delete_func);
                 curr = next;
             }
-
         }
         pthread_rwlock_destroy(hash->locks[i]);
         free(hash->locks[i]);
     }
-    close_log(hash->log);
+    delete_log(hash->log);
     free(hash->locks);
     free(hash->table);
     free(hash);
@@ -250,7 +249,6 @@ bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
     return true;
 }
 
-/*First version of backup, inefficient*/
 int backup_hash(hash_table * hash, char * path, char * (*to_byte_array) (Item), uint32_t (*get_size) (Item) ){
     hash_item * aux;
     FILE * backup = fopen(path, "w");
@@ -261,7 +259,7 @@ int backup_hash(hash_table * hash, char * path, char * (*to_byte_array) (Item), 
     #ifdef DEBUG
         printf("Starting Backup\n");
     #endif
-    for(unsigned int i; i<hash->size; i++){
+    for(unsigned int i = 0; i<hash->size; i++){
         if(hash->table[i] != NULL){
             aux = hash->table[i];
             do {
