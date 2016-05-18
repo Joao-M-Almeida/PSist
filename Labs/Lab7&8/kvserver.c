@@ -17,7 +17,7 @@
 #define DEFAULTPORT 9999
 #define MAXCLIENTS 5
 #define BACKUP_PATH "backup.data"
-
+#define LOG_PATH "log.data"
 /*
 Server to handle acess to the Key Value store. Only serves a client at a time.
 
@@ -104,11 +104,26 @@ int main(int argc, char const *argv[]) {
     if(argc>1){
         port = atoi(argv[1]);
     }
-
-    /*Create Hash Table*/
-    kv_store = create_hash_from_backup(STORESIZE, (char *) BACKUP_PATH, create_struct, destroy_struct, struct_to_str, struct_get_size);
+    FILE * aux = fopen(BACKUP_PATH, "r");
+    /*Check if Backup exists and Create Hash Table */
+    if(aux==NULL){
+        printf("No Backup found... Starting from scratch\n");
+        kv_store =  create_hash(STORESIZE, (char *) LOG_PATH);
+    }else{
+        fclose(aux);
+        /*backup exists, check if log exists*/
+        aux = fopen(LOG_PATH, "r");
+        if(aux==NULL){
+            printf("Backup found and no Log found...\n");
+            /*Log doesn't exist*/
+            kv_store = create_hash_from_backup(STORESIZE, (char *) BACKUP_PATH, (char *) LOG_PATH, create_struct, destroy_struct, struct_to_str, struct_get_size);
+        }else{
+            fclose(aux);
+            printf("Backup and Log found...\n");
+        }
+    }
     if( kv_store == NULL){
-        kv_store =  create_hash(STORESIZE);
+        exit(-1);
     }
 
     /*Create arguments structure*/

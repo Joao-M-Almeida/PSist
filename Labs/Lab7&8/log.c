@@ -28,12 +28,20 @@ kv_log * create_log(char * log_path){
 
 /* Log should be locked */
 int log_insert(kv_log * log, uint32_t key, void * to_store, char * (*to_byte_array) (Item), uint32_t (*get_size) (Item)){
-    fprintf(log->log_fd, "I %u %u ", key, get_size(to_store));
-    fwrite(to_byte_array(to_store), sizeof(char), get_size(to_store), log->log_fd);
+    char aux3[100];
+    uint32_t size = get_size(to_store);
+    sprintf(aux3, "I %u %u ", key, get_size(to_store));
+    char * aux = to_byte_array(to_store);
+    char * aux2 = (char *) malloc(sizeof(char*)*(strlen(aux3)+size));
+    memcpy(aux2, aux3, strlen(aux3));
+    char * ptr = aux2 +  strlen(aux3);
+    memcpy(ptr, aux, size);
+    fwrite(aux2, sizeof(char), size, log->log_fd);
     #ifdef DEBUG
-        printf("Logging insert K: %u S: %u V: ", key, get_size(to_store));
-        print_bytes(to_byte_array(to_store), get_size(to_store));
+        printf("Logging insert K: %u S: %u V: ", key, size);
+        print_bytes(to_byte_array(to_store), size);
     #endif
+    free(aux);
     return 0;
 }
 
@@ -57,7 +65,9 @@ int log_unlock(kv_log * log){
 int delete_log(kv_log * log){
     fclose(log->log_fd);
     pthread_mutex_destroy(log->lock);
-    remove(log->log_path);
+    free(log->lock);
+    remove(log->log_path); /*deletes log file*/
+    free(log->log_path);
     free(log);
     return 0;
 }

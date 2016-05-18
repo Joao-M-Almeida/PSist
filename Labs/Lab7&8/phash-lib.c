@@ -14,7 +14,7 @@
     Create Hash table, allocating the memory for the lists and the list mutexes, initializing the mutexes
 */
 
-hash_table * create_hash(uint32_t size){
+hash_table * create_hash(uint32_t size, char * log_path){
     hash_table * hash = (hash_table *) malloc(sizeof(hash_table));
     hash->table = (hash_item**) calloc(size, sizeof( hash_item* ));
     hash->size = size;
@@ -23,7 +23,7 @@ hash_table * create_hash(uint32_t size){
         hash->locks[i] = (pthread_rwlock_t*) malloc(sizeof(pthread_rwlock_t));
         pthread_rwlock_init(hash->locks[i],NULL);
     }
-    hash->log = create_log( (char*)"hash_log.data");
+    hash->log = create_log(log_path);
     return hash;
 }
 
@@ -128,7 +128,7 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite,
     #ifdef DEBUG
         printf("Insert trying to lock\n");
     #endif
-    log_lock(hash->log);
+
     pthread_rwlock_wrlock(hash->locks[index]);
     #ifdef DEBUG
         printf("Insert locked\n");
@@ -140,10 +140,10 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite,
         #endif
         hash->table[index] = create_hitem(key, item);
 
-        log_insert(hash->log,key, item, to_byte_array, get_size);
-
-        log_unlock(hash->log);
+        log_lock(hash->log);
         pthread_rwlock_unlock(hash->locks[index]);
+        log_insert(hash->log,key, item, to_byte_array, get_size);
+        log_unlock(hash->log);
         #ifdef DEBUG
             printf("Insert unlocked\n");
         #endif
@@ -174,10 +174,10 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite,
                 printf("Inserting Item at end of list\n");
             #endif
 
-            log_insert(hash->log, key, item, to_byte_array, get_size);
-
-            log_unlock(hash->log);
+            log_lock(hash->log);
             pthread_rwlock_unlock(hash->locks[index]);
+            log_insert(hash->log,key, item, to_byte_array, get_size);
+            log_unlock(hash->log);
 
         } else {
             #ifdef DEBUG
@@ -192,14 +192,12 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite,
                 delete_func(aux->item);
                 aux->item = item;
 
-                log_insert(hash->log, key, item, to_byte_array, get_size);
 
-                log_unlock(hash->log);
+                log_lock(hash->log);
                 pthread_rwlock_unlock(hash->locks[index]);
-
-                /*pthread_rwlock_unlock(&aux->lock);*/
-            }else{
+                log_insert(hash->log,key, item, to_byte_array, get_size);
                 log_unlock(hash->log);
+            }else{
                 pthread_rwlock_unlock(hash->locks[index]);
                 /*Item already exists*/
                 return 1;
@@ -219,17 +217,19 @@ bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
     hash_item *curr, *next;
 
     pthread_rwlock_wrlock(hash->locks[index]);
-    log_lock(hash->log);
+
     if(!hash->table[index]){
         /*No item on that index*/
-        log_unlock(hash->log);
         pthread_rwlock_unlock(hash->locks[index]);
         return false;
     }else if(hash->table[index]->key == key){
         next = hash->table[index]->next;
         delete_hitem(hash->table[index], delete_func);
         hash->table[index] = next;
+        log_lock(hash->log);
+        pthread_rwlock_unlock(hash->locks[index]);
         log_delete(hash->log, key);
+        log_unlock(hash->log);
     }else{
         for(curr = hash->table[index], next = curr->next;
             next != NULL && next->key != key;
@@ -237,15 +237,17 @@ bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
         if(next != NULL){
             curr->next = next->next;
             delete_hitem(next, delete_func);
+            log_lock(hash->log);
+            pthread_rwlock_unlock(hash->locks[index]);
             log_delete(hash->log, key);
+            log_unlock(hash->log);
         }else{
             /*Item not present*/
             pthread_rwlock_unlock(hash->locks[index]);
             return false;
         }
     }
-    log_unlock(hash->log);
-    pthread_rwlock_unlock(hash->locks[index]);
+
     return true;
 }
 
@@ -287,7 +289,7 @@ int backup_hash(hash_table * hash, char * path, char * (*to_byte_array) (Item), 
     Create Hash table, allocating the memory for the lists and the list mutexes, initializing the mutexes
     and then initialize it from backup
 */
-hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*create_func) (unsigned int ,uint8_t *), void (*delete_func) (Item), char * (*to_byte_array) (Item), uint32_t (*get_size) (Item)){
+hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path, void * (*create_func) (unsigned int ,uint8_t *), void (*delete_func) (Item), char * (*to_byte_array) (Item), uint32_t (*get_size) (Item)){
     hash_table * hash = (hash_table *) malloc(sizeof(hash_table));
     hash->table = (hash_item**) calloc(size, sizeof( hash_item* ));
     hash->size = size;
@@ -296,7 +298,7 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*create
         hash->locks[i] = (pthread_rwlock_t*) malloc(sizeof(pthread_rwlock_t));
         pthread_rwlock_init(hash->locks[i],NULL);
     }
-    hash->log = create_log( (char *) "hash_log.data");
+    hash->log = create_log(log_path);
     /*TODO: use create hash instead*/
 
     int backup = open(path,0, "r");
@@ -328,7 +330,7 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*create
             #endif
             if(buf+1024-aux >= val_size){
                 aux2 = (char *) malloc(sizeof(char)*(val_size+1));
-                strncpy(aux2, aux, val_size);
+                memcpy(aux2, aux, val_size);
                 aux2[val_size]='\0';
                 item_aux = create_func(val_size, (uint8_t *) aux2);
                 insert_item(hash, item_aux, key, 0, delete_func, to_byte_array, get_size);
@@ -339,7 +341,7 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*create
                 aux+=val_size;
             }else{
                 aux2 = (char *) malloc(sizeof(char)*(val_size+1));
-                strncpy(aux2, aux, buf+1024-aux);
+                memcpy(aux2, aux, buf+1024-aux);
                 aux3 = aux2 + (buf + 1024 - aux);
                 read(backup, aux3, val_size-(buf+1024-aux));
                 aux2[val_size]='\0';
@@ -358,7 +360,7 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, void * (*create
         if(aux!=buf){
             /* there is more to read*/
             l=aux-buf;
-            strncpy(buf2,aux,l);
+            memcpy(buf2,aux,l);
             aux2 = buf2+l;
             k = read(backup, aux2, 1024-l);
             if(k==0){

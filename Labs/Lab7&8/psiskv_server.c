@@ -95,7 +95,7 @@ void destroy_struct(void * void_to_destroy) {
 char * struct_to_str(void * void_to_str){
     value_struct * to_str = (value_struct * ) void_to_str;
     char * str = (char *) malloc(sizeof(char) * ( to_str->size+1));
-    strncpy(str, (char *) to_str->value, to_str->size);
+    memcpy(str, (char *) to_str->value, to_str->size);
     str[to_str->size] = '\0';
     return str;
 }

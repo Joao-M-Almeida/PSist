@@ -153,7 +153,8 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
         return -1;
     }
     #ifdef DEBUG
-        printf("Value received: %s\n", (char *) to_recv );
+        printf("Value received: ");
+        print_bytes(to_recv,key_value.value_length);
     #endif
 
     /*
@@ -161,9 +162,9 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
     */
 
     if ( (unsigned int) value_length > key_value.value_len){
-        strncpy(value, (char *) to_recv, key_value.value_len);
+        memcpy(value, (char *) to_recv, key_value.value_len);
     }else{
-        strncpy(value, (char *) to_recv, value_length);
+        memcpy(value, (char *) to_recv, value_length);
     }
     free(to_recv);
 
