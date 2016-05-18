@@ -31,10 +31,11 @@ int log_insert(kv_log * log, uint32_t key, void * to_store, char * (*to_byte_arr
     char aux3[100];
     uint32_t size = get_size(to_store);
     sprintf(aux3, "I %u %u ", key, get_size(to_store));
+    /*TODO use a get item instead*/
     char * aux = to_byte_array(to_store);
     char * aux2 = (char *) malloc(sizeof(char*)*(strlen(aux3)+size));
     memcpy(aux2, aux3, strlen(aux3));
-    char * ptr = aux2 +  strlen(aux3);
+    char * ptr = aux2 + strlen(aux3);
     memcpy(ptr, aux, size);
     fwrite(aux2, sizeof(char), size, log->log_fd);
     #ifdef DEBUG

@@ -42,8 +42,8 @@ struct arguments *args;
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
-    backup_hash(kv_store, (char *) BACKUP_PATH, struct_to_str, struct_get_size);
-    delete_hash(kv_store, destroy_struct);
+    backup_hash(kv_store, (char *) BACKUP_PATH);
+    delete_hash(kv_store);
     free(args);
     TCPclose(server);
     exit(exit_val);
@@ -108,7 +108,7 @@ int main(int argc, char const *argv[]) {
     /*Check if Backup exists and Create Hash Table */
     if(aux==NULL){
         printf("No Backup found... Starting from scratch\n");
-        kv_store =  create_hash(STORESIZE, (char *) LOG_PATH);
+        kv_store =  create_hash(STORESIZE, (char *) LOG_PATH, create_struct, destroy_struct, struct_to_str, struct_get_size);
     }else{
         fclose(aux);
         /*backup exists, check if log exists*/

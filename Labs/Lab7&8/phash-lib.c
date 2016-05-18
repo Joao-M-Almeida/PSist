@@ -14,10 +14,16 @@
     Create Hash table, allocating the memory for the lists and the list mutexes, initializing the mutexes
 */
 
-hash_table * create_hash(uint32_t size, char * log_path){
+hash_table * create_hash(uint32_t size, char * log_path, create_func new_create_func, delete_func new_delete_func, to_byte_array new_to_byte_array, get_size new_get_size){
     hash_table * hash = (hash_table *) malloc(sizeof(hash_table));
     hash->table = (hash_item**) calloc(size, sizeof( hash_item* ));
     hash->size = size;
+
+    hash->item_create = new_create_func;
+    hash->item_delete = new_delete_func;
+    hash->item_to_byte_array = new_to_byte_array;
+    hash->item_get_size = new_get_size;
+
     hash->locks = (pthread_rwlock_t**) malloc(sizeof(pthread_rwlock_t*)*size);
     for(unsigned int i = 0; i < size; i++){
         hash->locks[i] = (pthread_rwlock_t*) malloc(sizeof(pthread_rwlock_t));
@@ -66,7 +72,7 @@ void delete_hitem(hash_item *item, void (*delete_func) (Item)){
 Delete the entire hash table.
 First each item, then the locks then the hash
 */
-void delete_hash(hash_table * hash, void (*delete_func) (Item)){
+void delete_hash(hash_table * hash){
     uint32_t i;
     hash_item *curr, *next;
     for(i = 0; i < hash->size; i++){
@@ -75,15 +81,18 @@ void delete_hash(hash_table * hash, void (*delete_func) (Item)){
             /*TODO: lock hash and delete lock?*/
             while(curr){
                 next = curr->next;
-                delete_hitem(curr, delete_func);
+                delete_hitem(curr, hash->item_delete);
                 curr = next;
             }
         }
         pthread_rwlock_destroy(hash->locks[i]);
+        pthread_mutex_destroy(hash->log_locks[i]);
+        free(hash->log_locks[i]);
         free(hash->locks[i]);
     }
     delete_log(hash->log);
     free(hash->locks);
+    free(hash->log_locks);
     free(hash->table);
     free(hash);
     return;
@@ -100,7 +109,7 @@ uint hash_function(uint32_t key, uint32_t size){
 /*
     Find the item and then if it exists return the pointer to it.
 */
-Item read_item(hash_table * hash, uint32_t key,  Item (*copy_func) (Item)){
+Item read_item(hash_table * hash, uint32_t key){
     uint32_t index = hash_function(key, hash->size);
     hash_item *aux_hitem;
     Item item;
@@ -112,7 +121,7 @@ Item read_item(hash_table * hash, uint32_t key,  Item (*copy_func) (Item)){
 
     if(aux_hitem != NULL){
         /* Return copy of item instead of a pointer to it */
-        item = copy_func(aux_hitem->item);
+        item = hash->item_to_byte_array(aux_hitem->item);
         pthread_rwlock_unlock(hash->locks[index]);
         return item;
     }
@@ -125,9 +134,7 @@ Item read_item(hash_table * hash, uint32_t key,  Item (*copy_func) (Item)){
     If it doesn't exist insert the new item
     TODO: optimize critical sections: for instance remove create item from critical section and item deletion (in overwrite)
 */
-int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite,
-        void (*delete_func) (Item), char * (*to_byte_array) (Item),
-        uint32_t (*get_size) (Item)){
+int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite){
     uint32_t index = hash_function(key, hash->size);
     hash_item *aux;
     #ifdef DEBUG
@@ -147,7 +154,7 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite,
 
         pthread_mutex_lock(hash->log_locks[index]);
         pthread_rwlock_unlock(hash->locks[index]);
-        log_insert(hash->log,key, item, to_byte_array, get_size);
+        log_insert(hash->log,key, item, hash->item_to_byte_array, hash->item_get_size);
         pthread_mutex_unlock(hash->log_locks[index]);
         #ifdef DEBUG
             printf("Insert unlocked\n");
@@ -181,7 +188,7 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite,
 
             pthread_mutex_lock(hash->log_locks[index]);
             pthread_rwlock_unlock(hash->locks[index]);
-            log_insert(hash->log,key, item, to_byte_array, get_size);
+            log_insert(hash->log,key, item, hash->item_to_byte_array, hash->item_get_size);
             pthread_mutex_unlock(hash->log_locks[index]);
 
         } else {
@@ -194,13 +201,13 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite,
                 #endif
                 /*pthread_rwlock_wrlock(&aux->lock);*/
                 /*TODO: check if correct*/
-                delete_func(aux->item);
+                hash->item_delete(aux->item);
                 aux->item = item;
 
 
                 pthread_mutex_lock(hash->log_locks[index]);
                 pthread_rwlock_unlock(hash->locks[index]);
-                log_insert(hash->log,key, item, to_byte_array, get_size);
+                log_insert(hash->log,key, item, hash->item_to_byte_array, hash->item_get_size);
                 pthread_mutex_unlock(hash->log_locks[index]);
             }else{
                 pthread_rwlock_unlock(hash->locks[index]);
@@ -217,7 +224,7 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite,
     Find item, if it exists delete it
     TODO: optimize critical sections
 */
-bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
+bool delete_item(hash_table * hash, uint32_t key){
     uint32_t index = hash_function(key, hash->size);
     hash_item *curr, *next;
 
@@ -229,7 +236,7 @@ bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
         return false;
     }else if(hash->table[index]->key == key){
         next = hash->table[index]->next;
-        delete_hitem(hash->table[index], delete_func);
+        delete_hitem(hash->table[index], hash->item_delete);
         hash->table[index] = next;
         pthread_mutex_lock(hash->log_locks[index]);
         pthread_rwlock_unlock(hash->locks[index]);
@@ -241,7 +248,7 @@ bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
             curr = next, next = curr->next );
         if(next != NULL){
             curr->next = next->next;
-            delete_hitem(next, delete_func);
+            delete_hitem(next, hash->item_delete);
             pthread_mutex_lock(hash->log_locks[index]);
             pthread_rwlock_unlock(hash->locks[index]);
             log_delete(hash->log, key);
@@ -256,8 +263,7 @@ bool delete_item(hash_table * hash, uint32_t key, void (*delete_func) (Item)){
     return true;
 }
 
-int backup_hash(hash_table * hash, char * path, char * (*to_byte_array) (Item),
-    uint32_t (*get_size) (Item) ){
+int backup_hash(hash_table * hash, char * path){
     hash_item * aux;
     FILE * backup = fopen(path, "w");
     char * str_aux;
@@ -271,12 +277,12 @@ int backup_hash(hash_table * hash, char * path, char * (*to_byte_array) (Item),
         if(hash->table[i] != NULL){
             aux = hash->table[i];
             do {
-                str_aux = to_byte_array(aux->item);
-                fprintf(backup, "%u %u ", aux->key, get_size(aux->item));
-                fwrite(str_aux,sizeof(char),get_size(aux->item),backup);
+                str_aux = hash->item_to_byte_array(aux->item);
+                fprintf(backup, "%u %u ", aux->key, hash->item_get_size(aux->item));
+                fwrite(str_aux,sizeof(char),hash->item_get_size(aux->item),backup);
                 #ifdef DEBUG
-                    printf("K: %u, S:%u, V:", aux->key, get_size(aux->item));
-                    print_bytes(str_aux,  get_size(aux->item));
+                    printf("K: %u, S:%u, V:", aux->key, hash->item_get_size(aux->item));
+                    print_bytes(str_aux,  hash->item_get_size(aux->item));
                 #endif
                 free(str_aux);
                 aux = aux->next;
@@ -296,26 +302,9 @@ int backup_hash(hash_table * hash, char * path, char * (*to_byte_array) (Item),
     and then initialize it from backup
 */
 hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path,
-    void * (*create_func) (unsigned int ,uint8_t *), void (*delete_func) (Item),
-    char * (*to_byte_array) (Item), uint32_t (*get_size) (Item)){
-    /*
-    hash_table * hash = (hash_table *) malloc(sizeof(hash_table));
-    hash->table = (hash_item**) calloc(size, sizeof( hash_item* ));
-    hash->size = size;
-    hash->locks = (pthread_rwlock_t**) malloc(sizeof(pthread_rwlock_t*)*size);
-    for(unsigned int i = 0; i < size; i++){
-        hash->locks[i] = (pthread_rwlock_t*) malloc(sizeof(pthread_rwlock_t));
-        pthread_rwlock_init(hash->locks[i],NULL);
-    }
-    hash->log_locks = (pthread_mutex_t**) malloc(sizeof(pthread_mutex_t*)*size);
-    for(unsigned int i = 0; i < size; i++){
-        hash->log_locks[i] = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t));
-        pthread_mutex_init(hash->log_locks[i],NULL);
-    }
-    hash->log = create_log(log_path);
-    */
+    create_func new_create_func, delete_func new_delete_func, to_byte_array new_to_byte_array, get_size new_get_size){
 
-    hash_table * hash = create_hash(size,log_path);
+    hash_table * hash = create_hash(size,log_path, new_create_func, new_delete_func, new_to_byte_array, new_get_size);
 
     int backup = open(path,0, "r");
     if(backup == -1){
@@ -339,7 +328,8 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path
     buf[k]='\0'; /*Needed?*/
     aux = buf;
     while(1){
-        while(sscanf(aux,"%u %u %n",&key, &val_size, &l)>=2){
+        /*TODO: replace ' ' with %c*/
+        while(sscanf(aux,"%u %u %n",&key, &val_size, &l)>=3){
             aux+=l;
             #ifdef DEBUG
                 printf("K: %d, S: %d\n", key, val_size);
@@ -348,8 +338,8 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path
                 aux2 = (char *) malloc(sizeof(char)*(val_size+1));
                 memcpy(aux2, aux, val_size);
                 aux2[val_size]='\0';
-                item_aux = create_func(val_size, (uint8_t *) aux2);
-                insert_item(hash, item_aux, key, 0, delete_func, to_byte_array, get_size);
+                item_aux = hash->item_create(val_size, (uint8_t *) aux2);
+                insert_item(hash, item_aux, key, 0);
                 #ifdef DEBUG
                     printf("K: %d, V:", key);
                     print_bytes(aux2,  val_size);
@@ -361,8 +351,8 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path
                 aux3 = aux2 + (buf + 1024 - aux);
                 read(backup, aux3, val_size-(buf+1024-aux));
                 aux2[val_size]='\0';
-                item_aux =create_func(val_size, (uint8_t *) aux2);
-                insert_item(hash, item_aux, key, 0, delete_func, to_byte_array, get_size);
+                item_aux =hash->item_create(val_size, (uint8_t *) aux2);
+                insert_item(hash, item_aux, key, 0);
                 #ifdef DEBUG
                     printf("K: %d, V:", key);
                     print_bytes(aux2,  val_size);
@@ -374,6 +364,7 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path
         }
         /*Couldn't read a key and a size*/
         if(aux!=buf){
+            /*TODO: test this case*/
             /* there is more to read*/
             l=aux-buf;
             memcpy(buf2,aux,l);
