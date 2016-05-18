@@ -20,6 +20,7 @@ typedef struct _hash_item {
 typedef struct _hash_table{
     hash_item** table;
     pthread_rwlock_t** locks;
+    pthread_mutex_t** log_locks;
     uint32_t size;
     kv_log * log;
 } hash_table;

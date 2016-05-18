@@ -13,10 +13,10 @@ kv_log * create_log(char * log_path){
         printf("Creating Log\n");
     #endif
     kv_log * new_log = (kv_log *) malloc(sizeof(kv_log));
-    new_log->lock = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+    /*new_log->lock = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));*/
     new_log->log_path = (char *) malloc(sizeof(char)*(strlen(log_path)+1));
     strncpy(new_log->log_path, log_path, strlen(log_path)+1);
-    pthread_mutex_init(new_log->lock, NULL);
+    /*pthread_mutex_init(new_log->lock, NULL);*/
 
     new_log->log_fd = fopen(log_path, "w");
     if(new_log->log_fd == NULL){
@@ -54,18 +54,19 @@ int log_delete(kv_log * log, uint32_t key){
     return 0;
 }
 
+/*
 int log_lock(kv_log * log){
     return pthread_mutex_lock(log->lock);
 }
 
 int log_unlock(kv_log * log){
     return pthread_mutex_unlock(log->lock);
-}
+}*/
 
 int delete_log(kv_log * log){
     fclose(log->log_fd);
-    pthread_mutex_destroy(log->lock);
-    free(log->lock);
+    /*pthread_mutex_destroy(log->lock);
+    free(log->lock);*/
     remove(log->log_path); /*deletes log file*/
     free(log->log_path);
     free(log);
