@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <pthread.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 
@@ -38,6 +39,58 @@ int server;
 hash_table * kv_store;
 struct arguments *args;
 
+void * wakeup_front_server( void *args ){
+    pthread_detach(pthread_self());
+    printf("PRE execve\n");
+    execve("./front-server", args, NULL);
+    printf("POS execve\n");
+    return(NULL);
+}
+
+void * front_server_puller( void *args ){
+    pthread_t tid;
+    struct sockaddr_in address;
+    int fd;
+    int connected = 0;
+    int front_server_port = 10100;
+    int data_server_port = 10101;
+    char token = '\n';
+    pthread_detach(pthread_self());
+
+    fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if(fd==-1){ return(NULL); }
+
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_UNIX;
+    address.sin_addr.s_addr = htonl(atoh("0.0.0.0"));
+    address.sin_port = htons(front_server_port);
+
+    if(connect(fd, (struct sockaddr*)&address, sizeof(address)) != -1){
+        connected = 1;
+        while(connected){
+            if(TCPsend(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            if(TCPrecv(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+        }
+    }
+
+    fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_port = htons(data_server_port);
+    if(bind(fd, (struct sockaddr*)&address, sizeof(address))==-1){ return(NULL); }
+    if(listen(fd, MAXCLIENTS)){ return(NULL); }
+
+    while(1){
+        while(connected){
+            if(TCPsend(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            if(TCPrecv(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+        }
+        pthread_create(&tid, NULL, &wakeup_front_server, (void *) &args);
+        if(TCPaccept(fd) != -1){ connected = 1; }
+    }
+
+    return(NULL);
+}
+
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
@@ -56,10 +109,10 @@ void * answer_call( void *args ){
     struct arguments *_args = *((struct arguments **) args);
     int sock_fd = _args->sock_fd;
 
-    printf("\n\n\t#NEW THREAD\n");
+    /*printf("\n\n\t#NEW THREAD\n");*/
 
     pthread_detach(pthread_self());
-    printf("\tSock_fd: %d\n\n\n", sock_fd);
+    /*printf("\tSock_fd: %d\n\n\n", sock_fd);*/
 
     while (1) {
         int err = process_psiskv_prequest(sock_fd,kv_store);
@@ -77,7 +130,7 @@ void * answer_call( void *args ){
     }
 
     close(sock_fd);
-    printf("\t#END OF THREAD\n\n");
+    /*printf("\t#END OF THREAD\n\n");*/
 
     return(NULL);
 }

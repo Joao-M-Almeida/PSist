@@ -46,6 +46,56 @@ void exit_gracefuly(int signum){
     clean_up(0);
 }
 
+void * wakeup_data_server( void *args ){
+    pthread_detach(pthread_self());
+    execve("./data-server", args, NULL);
+    return(NULL);
+}
+
+void * data_server_puller( void *args ){
+    pthread_t tid;
+    struct sockaddr_in address;
+    int fd;
+    int connected = 0;
+    int front_server_port = 10100;
+    int data_server_port = 10101;
+    char token = '\n';
+    pthread_detach(pthread_self());
+
+    fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if(fd==-1){ return(NULL); }
+
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_UNIX;
+    address.sin_addr.s_addr = htonl(atoh("0.0.0.0"));
+    address.sin_port = htons(data_server_port);
+
+    if(connect(fd, (struct sockaddr*)&address, sizeof(address)) != -1){
+        connected = 1;
+        while(connected){
+            if(TCPsend(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            if(TCPrecv(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+        }
+    }
+
+    fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_port = htons(front_server_port);
+    if(bind(fd, (struct sockaddr*)&address, sizeof(address))==-1){ return(NULL); }
+    if(listen(fd, MAXCLIENTS)){ return(NULL); }
+
+    while(1){
+        while(connected){
+            if(TCPsend(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            if(TCPrecv(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+        }
+        pthread_create(&tid, NULL, &wakeup_data_server, (void *) &args);
+        if(TCPaccept(fd) != -1){ connected = 1; }
+    }
+
+    return(NULL);
+}
+
 void * answer_call( void *args ){
     char buffer[128];
     struct arguments *_args = *((struct arguments **) args);
