@@ -7,11 +7,12 @@
     Create Hash table, allocating the memory for the lists and the list mutexes, initializing the mutexes
 */
 hash_table * create_hash(uint32_t size){
+    unsigned int i;
     hash_table * hash = (hash_table *) malloc(sizeof(hash_table));
     hash->table = (hash_item**) calloc(size, sizeof( hash_item* ));
     hash->size = size;
     hash->locks = (pthread_rwlock_t**) malloc(sizeof(pthread_rwlock_t*)*size);
-    for(unsigned int i = 0; i < size; i++){
+    for(i = 0; i < size; i++){
         hash->locks[i] = (pthread_rwlock_t*) malloc(sizeof(pthread_rwlock_t));
         pthread_rwlock_init(hash->locks[i],NULL);
     }

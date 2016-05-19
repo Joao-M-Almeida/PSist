@@ -1,10 +1,19 @@
 CC = gcc
 CFLAGS = -Wall
-DEPS = debug.h item.h phash-lib.h inetutils.h TCPlib.h psiskv.h psiskv_server.h
-OBJ = front-server.o data-server.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o
+CLIENT_OBJ = client.c inetutils.o TCPlib.o psiskv_lib.o
+FRONT_SERVER_OBJ = front-server.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o
+DATA_SERVER_OBJ = data-server.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o
 EDITOR = gedit
 
-main: $(OBJ)
+main: front_server data_server
+
+front_server: $(FRONT_SERVER_OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ -pthread
+
+data_server: $(DATA_SERVER_OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ -pthread
+
+client: $(CLIENT_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@
 
 %.o: %.c $(DEPS)
@@ -12,6 +21,9 @@ main: $(OBJ)
 
 c:
 	clear
+	rm front_server
+	rm data_server
+	rm client
 	rm *.o
 
 o:

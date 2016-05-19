@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <pthread.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 
@@ -45,95 +46,27 @@ void exit_gracefuly(int signum){
     clean_up(0);
 }
 
-int create_ds_stub() {
-    return TCPconnect(getIPbyname((char *) "127.0.0.1"), 9998);
-}
-
-int proxy_handler(int sock_fd){
-    kv_msg key_value;
-    uint8_t * to_recv = (uint8_t *) &key_value;
-    bool stop = false;
-    int ds_fd = create_ds_stub();
-
-    while(!stop){
-        int cmd = TCPrecv(sock_fd, to_recv, sizeof(kv_msg));
-        if( cmd < 0 ){
-            return result;
-        }
-
-        #ifdef DEBUG
-            printf("Request: \n\ttype: %s\n\tkey:%d\n\tValue_len:%d\n",
-                msg_type_to_str(key_value.type), key_value.key, key_value.value_len);
-        #endif
-
-        switch(key_value.type){
-            case WRITE_REQ:
-                #ifdef DEBUG
-                    printf("Received WRITE_REQ\n");
-                #endif
-                /*TODO: enviar pedido de escrita sem overwrite */
-                TCPsend(ds_fd, to_recv, sizeof(kv_msg));
-                break;
-            case WRITE_REQ_OW:
-                #ifdef DEBUG
-                    printf("Received WRITE_REQ_OW\n");
-                #endif
-                /*TODO: enviar pedido de escrita com overwrite */
-                TCPsend(ds_fd, to_recv, sizeof(kv_msg));
-                break;
-            case READ_REQ:
-                #ifdef DEBUG
-                    printf("Received READ_REQ\n");
-                #endif
-                /*TODO: enviar pedido de leitura */
-                TCPsend(ds_fd, to_recv, sizeof(kv_msg));
-                break;
-            case DELETE_REQ:
-                #ifdef DEBUG
-                    printf("Received DELETE_REQ\n");
-                #endif
-                /*TODO: enviar pedido de remoção */
-                TCPsend(ds_fd, to_recv, sizeof(kv_msg));
-                break;
-            default:
-                return -1;
-        }
-    }
-}
-
 void * answer_call( void *args ){
+    char buffer[128];
     struct arguments *_args = *((struct arguments **) args);
     int sock_fd = _args->sock_fd;
 
-    printf("\n\n\t#NEW THREAD\n");
+    sprintf(buffer, "127.0.0.1:9998");
 
     pthread_detach(pthread_self());
-    printf("\tSock_fd: %d\n\n\n", sock_fd);
 
-    while (1) {
-        int err = create_ds_stub(sock_fd);
+    /*printf("\tSock_fd: %d\n\n\n", sock_fd);*/
 
-        if (err<0){
-            if(err == -1){
-                printf("Error while processing request.\n" );
-                /*perror("Process Request");*/
-                return(NULL);
-            }else if (err == -2){
-                printf("Connection Closed by peer.\n" );
-                break;
-            }
-        }
-    }
+    TCPsend(sock_fd, (uint8_t *) buffer, strlen(buffer)*sizeof(char));
 
     close(sock_fd);
-    printf("\t#END OF THREAD\n\n");
 
     return(NULL);
 }
 
 int main(int argc, char const *argv[]) {
     /* code */
-
+    int stop = 0;
     unsigned short port = DEFAULTPORT;
 
     /*Threads*/
@@ -170,8 +103,8 @@ int main(int argc, char const *argv[]) {
     }
 
     int incoming;
-    while (1) {
-        printf("Server Waiting for connection\n");
+    printf("Server Waiting for connections @ 127.0.0.1:%d\n", port);
+    while (!stop) {
 
         incoming = TCPaccept(server);
 
@@ -181,10 +114,11 @@ int main(int argc, char const *argv[]) {
         }
 
         /*criar thread*/
-        printf("Creating a thread\n");
         args->sock_fd = incoming;
         pthread_create(&tid, NULL, &answer_call, (void *) &args);
 
     }
     clean_up(0);
+
+    return -1;
 }
