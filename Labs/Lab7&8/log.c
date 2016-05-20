@@ -40,9 +40,12 @@ int log_insert(kv_log * log, uint32_t key, void * to_store, char * (*to_byte_arr
     fwrite(aux2, sizeof(char), size, log->log_fd);
     #ifdef DEBUG
         printf("Logging insert K: %u S: %u V: ", key, size);
-        print_bytes(to_byte_array(to_store), size);
+        char * aux99 = to_byte_array(to_store);
+        print_bytes(aux99, size);
+        free(aux99);
     #endif
     free(aux);
+    free(aux2);
     return 0;
 }
 

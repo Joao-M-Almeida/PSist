@@ -121,7 +121,8 @@ Item read_item(hash_table * hash, uint32_t key){
 
     if(aux_hitem != NULL){
         /* Return copy of item instead of a pointer to it */
-        item = hash->item_to_byte_array(aux_hitem->item);
+        /*TODO: this is working but is ugly*/
+        item = hash->item_create(hash->item_get_size(aux_hitem->item), (uint8_t *) hash->item_to_byte_array(aux_hitem->item));
         pthread_rwlock_unlock(hash->locks[index]);
         return item;
     }
