@@ -36,4 +36,8 @@
 
 # Data files
 *.data
+
 *.fuse_hidden*
+
+#Temp files
+*.temp
