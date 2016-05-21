@@ -157,6 +157,7 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
         #ifdef DEBUG
             printf("Item already exists and didn't overwrite\n");
         #endif
+        destroy_struct(to_store);
     }
 
 
