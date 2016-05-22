@@ -145,7 +145,7 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
     message.value_len = 0;
 
     /*Insert the item on the hash store*/
-    err = insert_item(store,to_store,key,overwrite);
+    err = insert_item(store,to_store,key,overwrite, 1);
     #ifdef DEBUG
         printf("insert_item returned %d\n", err);
     #endif
@@ -221,7 +221,7 @@ int delete_preq(hash_table * store, int kv_descriptor, uint32_t key){
     message.type = DELETE_RESP;
     message.key = 0;
 
-    if (!delete_item(store, key)){
+    if (!delete_item(store, key,1)){
         /*Item doesn't exist*/
         message.value_len = 0;
     } else{

@@ -135,7 +135,7 @@ Item read_item(hash_table * hash, uint32_t key){
     If it doesn't exist insert the new item
     TODO: optimize critical sections: for instance remove create item from critical section and item deletion (in overwrite)
 */
-int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite){
+int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, int logging){
     uint32_t index = hash_function(key, hash->size);
     hash_item *aux;
     #ifdef DEBUG
@@ -152,11 +152,14 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite){
             printf("Inserting Item at the begining of empty list\n");
         #endif
         hash->table[index] = create_hitem(key, item);
-
-        pthread_mutex_lock(hash->log_locks[index]);
+        if(logging){
+            pthread_mutex_lock(hash->log_locks[index]);
+        }
         pthread_rwlock_unlock(hash->locks[index]);
-        log_insert(hash->log,key, item, hash->item_to_byte_array, hash->item_get_size);
-        pthread_mutex_unlock(hash->log_locks[index]);
+        if(logging){
+            log_insert(hash->log,key, item, hash->item_to_byte_array, hash->item_get_size);
+            pthread_mutex_unlock(hash->log_locks[index]);
+        }
         #ifdef DEBUG
             printf("Insert unlocked\n");
         #endif
@@ -187,10 +190,14 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite){
                 printf("Inserting Item at end of list\n");
             #endif
 
-            pthread_mutex_lock(hash->log_locks[index]);
+            if(logging){
+                pthread_mutex_lock(hash->log_locks[index]);
+            }
             pthread_rwlock_unlock(hash->locks[index]);
-            log_insert(hash->log,key, item, hash->item_to_byte_array, hash->item_get_size);
-            pthread_mutex_unlock(hash->log_locks[index]);
+            if(logging){
+                log_insert(hash->log,key, item, hash->item_to_byte_array, hash->item_get_size);
+                pthread_mutex_unlock(hash->log_locks[index]);
+            }
 
         } else {
             #ifdef DEBUG
@@ -206,10 +213,14 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite){
                 aux->item = item;
 
 
-                pthread_mutex_lock(hash->log_locks[index]);
+                if(logging){
+                    pthread_mutex_lock(hash->log_locks[index]);
+                }
                 pthread_rwlock_unlock(hash->locks[index]);
-                log_insert(hash->log,key, item, hash->item_to_byte_array, hash->item_get_size);
-                pthread_mutex_unlock(hash->log_locks[index]);
+                if(logging){
+                    log_insert(hash->log,key, item, hash->item_to_byte_array, hash->item_get_size);
+                    pthread_mutex_unlock(hash->log_locks[index]);
+                }
             }else{
                 pthread_rwlock_unlock(hash->locks[index]);
                 /*Item already exists*/
@@ -225,7 +236,7 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite){
     Find item, if it exists delete it
     TODO: optimize critical sections
 */
-bool delete_item(hash_table * hash, uint32_t key){
+bool delete_item(hash_table * hash, uint32_t key, int logging){
     uint32_t index = hash_function(key, hash->size);
     hash_item *curr, *next;
 
@@ -239,10 +250,14 @@ bool delete_item(hash_table * hash, uint32_t key){
         next = hash->table[index]->next;
         delete_hitem(hash->table[index], hash->item_delete);
         hash->table[index] = next;
-        pthread_mutex_lock(hash->log_locks[index]);
+        if(logging){
+            pthread_mutex_lock(hash->log_locks[index]);
+        }
         pthread_rwlock_unlock(hash->locks[index]);
-        log_delete(hash->log, key);
-        pthread_mutex_unlock(hash->log_locks[index]);
+        if(logging){
+            log_delete(hash->log, key);
+            pthread_mutex_unlock(hash->log_locks[index]);
+        }
     }else{
         for(curr = hash->table[index], next = curr->next;
             next != NULL && next->key != key;
@@ -250,10 +265,14 @@ bool delete_item(hash_table * hash, uint32_t key){
         if(next != NULL){
             curr->next = next->next;
             delete_hitem(next, hash->item_delete);
-            pthread_mutex_lock(hash->log_locks[index]);
+            if(logging){
+                pthread_mutex_lock(hash->log_locks[index]);
+            }
             pthread_rwlock_unlock(hash->locks[index]);
-            log_delete(hash->log, key);
-            pthread_mutex_unlock(hash->log_locks[index]);
+            if(logging){
+                log_delete(hash->log, key);
+                pthread_mutex_unlock(hash->log_locks[index]);
+            }
         }else{
             /*Item not present*/
             pthread_rwlock_unlock(hash->locks[index]);
@@ -266,7 +285,10 @@ bool delete_item(hash_table * hash, uint32_t key){
 
 int backup_hash(hash_table * hash, char * path){
     hash_item * aux;
-    FILE * backup = fopen(path, "w");
+    char temp_path[1024];
+    strcpy(temp_path, path);
+    strcat(temp_path, ".temp");
+    FILE * backup = fopen(temp_path, "w");
     char * str_aux;
     if(backup == NULL){
         return -1;
@@ -294,6 +316,15 @@ int backup_hash(hash_table * hash, char * path){
         printf("Finished Backup\n");
     #endif
     fclose(backup);
+    /*Check if backup exists and replace it*/
+    FILE * old_backup;
+    old_backup = fopen(path,"r");
+    if(old_backup != NULL){
+        fclose(old_backup);
+        remove(path);
+    }
+    rename(temp_path, path);
+
     return 0;
 }
 
@@ -327,10 +358,21 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path
     int k;
     k = read(backup, buf, 1024);
     buf[k]='\0'; /*Needed?*/
+    #ifdef DEBUG
+        printf("Buffer:");
+        print_bytes(buf,  k);
+    #endif
     aux = buf;
+    char space;
     while(1){
         /*TODO: replace ' ' with %c*/
-        while(sscanf(aux,"%u %u %n",&key, &val_size, &l)>=3){
+        while(sscanf(aux,"%u %u%c%n",&key, &val_size, &space, &l)>=3){
+            if(space!=' '){
+                break;
+                #ifdef DEBUG
+                    printf("Error");
+                #endif
+            }
             aux+=l;
             #ifdef DEBUG
                 printf("K: %d, S: %d\n", key, val_size);
@@ -340,7 +382,7 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path
                 memcpy(aux2, aux, val_size);
                 aux2[val_size]='\0';
                 item_aux = hash->item_create(val_size, (uint8_t *) aux2);
-                insert_item(hash, item_aux, key, 0);
+                insert_item(hash, item_aux, key, 0,0);
                 #ifdef DEBUG
                     printf("K: %d, V:", key);
                     print_bytes(aux2,  val_size);
@@ -353,7 +395,7 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path
                 read(backup, aux3, val_size-(buf+1024-aux));
                 aux2[val_size]='\0';
                 item_aux =hash->item_create(val_size, (uint8_t *) aux2);
-                insert_item(hash, item_aux, key, 0);
+                insert_item(hash, item_aux, key, 0,0);
                 #ifdef DEBUG
                     printf("K: %d, V:", key);
                     print_bytes(aux2,  val_size);
@@ -392,4 +434,112 @@ hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path
     #endif
     close(backup);
     return hash;
+}
+
+int process_hash_log(hash_table * hash, char * log_path){
+    int log_file = open(log_path,0, "r");
+    if(log_file == -1){
+        return -1;
+    }
+    #ifdef DEBUG
+        printf("Reading Log File...\n");
+    #endif
+
+    int bufsize = 100;
+
+    char * buf = (char *) malloc(sizeof(char)*(bufsize+1));
+    char * buf2 = (char *) malloc(sizeof(char)*(bufsize+1));
+    int k;
+    k = read(log_file, buf, bufsize);
+    buf[k]='\0'; /*Needed?*/
+    #ifdef DEBUG
+        printf("Buffer:");
+        print_bytes(buf,  k);
+    #endif
+    char log_type;
+    char space;
+    char * ptr, * ptr2, * ptr3;
+    Item item_aux;
+    int l;
+    uint32_t key, val_size;
+    ptr = buf;
+    int buf_left;
+    while(1){
+        /*Get log type and space*/
+        if(sscanf(buf,"%c%c",&log_type, &space)!=2){
+            return -1;
+        }
+        if(space != ' '){
+            return -1;
+        }
+        if(log_type == 'I'){
+            /*it's an insert*/
+            ptr = buf+2;
+            if(sscanf(ptr,"%u %u%c%n",&key, &val_size ,&space, &l)>=3){
+                if(space != ' '){
+                    return -1;
+                }
+                /*Got key and size*/
+                ptr+=l;
+                if(buf+bufsize-ptr >= val_size){
+                    /*There is still room in the buffer for the value*/
+                    ptr2 = (char *) malloc(sizeof(char)*(val_size+1));
+                    memcpy(ptr2, ptr, val_size);
+                    ptr2[val_size]='\0';
+                    item_aux = hash->item_create(val_size, (uint8_t *) ptr2);
+                    insert_item(hash, item_aux, key, 0, 0);
+                    #ifdef DEBUG
+                        printf("K: %d, V:", key);
+                        print_bytes(ptr2,  val_size);
+                    #endif
+                    ptr+=val_size;
+                }else{
+                    /*Copy the rest of the buffer to a new buffer and
+                    read the rest of the value*/
+                    ptr2 = (char *) malloc(sizeof(char)*(val_size+1));
+                    memcpy(ptr2, ptr, buf+bufsize-ptr);
+                    ptr3 = ptr2 + (buf+bufsize-ptr);
+                    read(log_file, ptr3, val_size-(buf+bufsize-ptr));
+                    ptr2[val_size]='\0';
+                    item_aux =hash->item_create(val_size, (uint8_t *) ptr2);
+                    insert_item(hash, item_aux, key, 0,0);
+                    #ifdef DEBUG
+                        printf("K: %d, V:", key);
+                        print_bytes(ptr2,  val_size);
+                    #endif
+                    ptr = buf + bufsize;
+                }
+            }else{
+                return -1;
+            }
+        }else if (log_type == 'D'){
+            /*It's a delete*/
+            ptr = buf+2;
+            if(sscanf(ptr,"%u%n",&key, &l)>=1){
+                delete_item(hash, key, 0);
+                ptr+=l;
+            }else{
+                return -1;
+            }
+        }
+        buf_left = buf+bufsize-ptr;
+        memcpy(buf2, ptr, buf_left);
+        ptr=buf2+buf_left;
+        k = read(log_file, ptr, bufsize-buf_left);
+        if(k==0){
+            break;
+        }
+        ptr[k]='\0';
+        ptr3 = buf2;
+        buf2 = buf;
+        buf = ptr3;
+        ptr = buf;
+    }
+    #ifdef DEBUG
+        printf("Finished Processing Log File\n");
+    #endif
+    close(log_file);
+    free(buf);
+    free(buf2);
+    return 0;
 }

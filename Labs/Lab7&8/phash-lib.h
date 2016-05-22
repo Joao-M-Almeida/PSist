@@ -42,10 +42,11 @@ hash_table * create_hash(uint32_t size, char * log_path, create_func new_create_
 void delete_hash(hash_table * hash);
 uint32_t hash_function(uint32_t key, uint32_t size);
 Item read_item(hash_table * hash, uint32_t key);
-int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite);
-bool delete_item(hash_table * hash, uint32_t key);
+int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, int logging);
+bool delete_item(hash_table * hash, uint32_t key, int logging);
 
 int backup_hash(hash_table * hash, char * path);
 hash_table * create_hash_from_backup(uint32_t size, char * path, char * log_path, create_func new_create_func, delete_func new_delete_func, to_byte_array new_to_byte_array, get_size new_get_size);
+int process_hash_log(hash_table * hash, char * log_path);
 
 #endif

@@ -18,6 +18,6 @@ int log_delete(kv_log * log, uint32_t key);
 /*int log_lock(kv_log * log);
 int log_unlock(kv_log * log);*/
 int delete_log(kv_log * log);
-
+int rename_log(kv_log * log, char * new_path);
 
 #endif

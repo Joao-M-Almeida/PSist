@@ -22,6 +22,14 @@ c:
 	rm *.gch -f
 	rm *.out -f
 #	rm *.data -f
+
+C:
+	clear
+	rm *.o -f
+	rm *.gch -f
+	rm *.out -f
+	rm *.data -f
+	rm *.temp -f
 o:
 	$(EDITOR) *.c *.h makefile &
 

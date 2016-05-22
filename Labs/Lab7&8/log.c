@@ -76,3 +76,16 @@ int delete_log(kv_log * log){
     free(log);
     return 0;
 }
+
+int rename_log(kv_log * log, char * new_path){
+    fclose(log->log_fd);
+    rename(log->log_path, new_path);
+    free(log->log_path);
+    log->log_path = (char *) malloc(sizeof(char)*(strlen(new_path)+1));
+    strncpy(log->log_path, new_path, strlen(new_path)+1);
+    log->log_fd=fopen(new_path, "a");
+    if(log->log_fd == NULL){
+        return -1;
+    }
+    return 0;
+}
