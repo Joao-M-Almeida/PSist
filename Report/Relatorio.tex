@@ -115,32 +115,61 @@ Tratamento de erros
 \section{System overview}
 \label{sec:Systemoverview}
 
+To use the Key-Value Store the client uses the \emph{psiskv.h} library to establish a connection and make requests.
+
+The communication flow is exemplified on figure~\ref{fig:Comms}. During the \textbf{kv\_connect} the \textbf{client} connects to the \textbf{Front Server} which responds with the port of the \textbf{Data Server} and then the client connects to it and is ready to make requests.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{./Pictures/CommunicationFlow.png}
+\caption{Overview of the client KV store communication flow}\label{fig:Comms}
+\end{figure}
+\section{Key Value Data Structure}
+
+The \textbf{data storage} is implemented on an \textbf{hash table} where each bucket of the hash table is a \textbf{linked list} and each list entry holds the key and a pointer to the value. See Figure~\ref{fig:DataOverview} for more details.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{./Pictures/DataStructures.png}
 \caption{Overview of Data Structures}\label{fig:DataOverview}
 \end{figure}
 
-
-\section{Key Value Data Structure}
-
-The \textbf{data storage} is implemented on an \textbf{hash table} where each bucket of the hash table is a \textbf{linked list} and each list entry holds the key and a pointer to the value. See Figure~\ref{fig:DataOverview} for more details. 
-
 The hash table component is implemented with \textbf{data abstraction} in mind, in this system it holds a byte array and its size, but could be used to store any kind of data. The value implementation belongs to other component, in the key-value store case to the \emph{psiskv\_server.h}.
 
 \section{KV Message Formats}
 
+The structure of the messages exchanged between the \textbf{client} and the \textbf{Data server} is:  a  enumerate \emph{msg\_type}, a \emph{uint32\_t} with the \textbf{key} and an \emph{unsigned int} with the length of the value. The possible message types are:
+\begin{description}
+    \item[WRITE\_REQ] - write request;
+    \item[WRITE\_REQ\_OW] - write request with overwrite;
+    \item[WRITE\_RESP] - write response;
+    \item[READ\_REQ] - read request;
+    \item[READ\_RESP] - read response;
+    \item[DELETE\_REQ] - delete request;
+    \item[DELETE\_RESP] - delete response;
+    \item[ERROR] - error message;
+\end{description}
+After a \emph{WRITE\_REQ} or a \emph{READ\_RESP} a buffer containing the value to store is transmitted over TCP with the length being specified on the previous message.
+
+\subsection{Error Messages}
+\label{sub:ErrorMessages}
+
+
 \section{Data Server}
 \label{sec:DataServer}
+
 \subsection{Thread Management}
 \label{sub:ThreadManagement}
 
+The threads are created following the \textbf{on demand} strategy.
 
 \section{Front Server}
 \label{sec:FrontServer}
 
 \section{Backup and Log}
 \label{sec:BackupLog}
+
+To guarantee data consistency a backup and a log file are used.
 
 \section{Fault Tolerance}
 \label{sec:FaultTolerance}
