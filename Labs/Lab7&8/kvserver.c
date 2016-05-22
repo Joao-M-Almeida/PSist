@@ -110,8 +110,23 @@ int main(int argc, char const *argv[]) {
     /*Check if Backup exists and Create Hash Table */
     if(aux==NULL){
         printf("No Backup found... Starting from scratch\n");
-        /*TODO: check for log*/
-        kv_store =  create_hash(STORESIZE, (char *) LOG_PATH, create_struct, destroy_struct, struct_to_str, struct_get_size);
+        aux = fopen(LOG_PATH, "r");
+        if(aux==NULL){
+            printf("No Log found...\n");
+            kv_store =  create_hash(STORESIZE, (char *) LOG_PATH, create_struct, destroy_struct, struct_to_str, struct_get_size);
+        }else{
+            fclose(aux);
+            printf("Log found\n");
+            char temp_log[1024];
+            strcpy(temp_log, LOG_PATH);
+            strcat(temp_log, ".temp");
+            kv_store = create_hash(STORESIZE, temp_log, create_struct, destroy_struct, struct_to_str, struct_get_size);
+            /*process old log and rename temp*/
+            if(process_hash_log(kv_store, (char *) LOG_PATH)<0){
+                printf("Error reading Log... Ignoring\n");
+            }
+            rename_log(kv_store->log, (char *) LOG_PATH);
+        }
     }else{
         fclose(aux);
         /*backup exists, check if log exists*/

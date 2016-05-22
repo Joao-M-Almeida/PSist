@@ -14,7 +14,7 @@ int main(){
 	}
 
 	printf("press enter to read values\n");
-	getchar();
+	/*getchar();*/
 
 	/*Loop from key 0 to MAX_VALUES comparing the values*/
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
@@ -24,14 +24,14 @@ int main(){
 	}
 
 	printf("press enter to delete even values\n");
-	getchar();
+	/*getchar();*/
 	/*Loop from key 0 to MAX_VALUES deleting even values*/
 	for (uint32_t i = 0; i < MAX_VALUES; i +=2){
 		kv_delete(kv, i);
 	}
 
 	printf("press enter to read values\n");
-	getchar();
+	/*getchar();*/
 	/*Loop from key 0 to MAX_VALUES trying to read values*/
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 1000) == 0){
@@ -46,7 +46,7 @@ int main(){
 	}
 
 	printf("press enter to read new values\n");
-	getchar();
+	/*getchar();*/
 	/*Loop from key 0 to MAX_VALUES to read values*/
 	for (uint32_t i = 0; i < MAX_VALUES; i ++){
 		if(kv_read(kv, i , linha, 1000) == 0){

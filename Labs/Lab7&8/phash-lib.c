@@ -445,7 +445,7 @@ int process_hash_log(hash_table * hash, char * log_path){
         printf("Reading Log File...\n");
     #endif
 
-    int bufsize = 100;
+    const int bufsize = 100;
 
     char * buf = (char *) malloc(sizeof(char)*(bufsize+1));
     char * buf2 = (char *) malloc(sizeof(char)*(bufsize+1));
@@ -454,7 +454,7 @@ int process_hash_log(hash_table * hash, char * log_path){
     buf[k]='\0'; /*Needed?*/
     #ifdef DEBUG
         printf("Buffer:");
-        print_bytes(buf,  k);
+        print_bytes(buf,  k+1);
     #endif
     char log_type;
     char space;
@@ -463,24 +463,38 @@ int process_hash_log(hash_table * hash, char * log_path){
     int l;
     uint32_t key, val_size;
     ptr = buf;
-    int buf_left;
+    int buf_left = k;
     while(1){
         /*Get log type and space*/
         if(sscanf(buf,"%c%c",&log_type, &space)!=2){
+            #ifdef DEBUG
+                printf("log_type errror\n");
+            #endif
             return -1;
         }
         if(space != ' '){
+            #ifdef DEBUG
+                printf("No ' ' found\n");
+            #endif
             return -1;
         }
         if(log_type == 'I'){
             /*it's an insert*/
+            #ifdef DEBUG
+                printf("Processing Insert\n");
+            #endif
             ptr = buf+2;
+            buf_left-=2;
             if(sscanf(ptr,"%u %u%c%n",&key, &val_size ,&space, &l)>=3){
                 if(space != ' '){
+                    #ifdef DEBUG
+                        printf("No ' ' found\n");
+                    #endif
                     return -1;
                 }
                 /*Got key and size*/
                 ptr+=l;
+                buf_left-=l;
                 if(buf+bufsize-ptr >= val_size){
                     /*There is still room in the buffer for the value*/
                     ptr2 = (char *) malloc(sizeof(char)*(val_size+1));
@@ -492,6 +506,7 @@ int process_hash_log(hash_table * hash, char * log_path){
                         printf("K: %d, V:", key);
                         print_bytes(ptr2,  val_size);
                     #endif
+                    buf_left-=val_size;
                     ptr+=val_size;
                 }else{
                     /*Copy the rest of the buffer to a new buffer and
@@ -508,25 +523,54 @@ int process_hash_log(hash_table * hash, char * log_path){
                         print_bytes(ptr2,  val_size);
                     #endif
                     ptr = buf + bufsize;
+                    buf_left=0;
+
                 }
             }else{
+                #ifdef DEBUG
+                    printf("Error scanf Insert\n");
+                #endif
                 return -1;
             }
         }else if (log_type == 'D'){
+            #ifdef DEBUG
+                printf("Processing Delete\n");
+            #endif
             /*It's a delete*/
+            buf_left-=2;
             ptr = buf+2;
             if(sscanf(ptr,"%u%n",&key, &l)>=1){
                 delete_item(hash, key, 0);
                 ptr+=l;
+                buf_left-=l;
             }else{
                 return -1;
             }
+        }else{
+            #ifdef DEBUG
+                printf("Unkown Log type\n");
+            #endif
         }
-        buf_left = buf+bufsize-ptr;
+        #ifdef DEBUG
+
+        #endif
+        /*buf_left = buf+bufsize-ptr;*/
+        #ifdef DEBUG
+            printf("Ptr str: %s \n Bytes: ", ptr);
+            print_bytes(ptr,  buf_left);
+            printf("Buffer still has %d bytes left\n", buf_left);
+        #endif
         memcpy(buf2, ptr, buf_left);
         ptr=buf2+buf_left;
+        #ifdef DEBUG
+            printf("Reading more %d bytes\n",  bufsize-buf_left);
+        #endif
         k = read(log_file, ptr, bufsize-buf_left);
-        if(k==0){
+        #ifdef DEBUG
+            printf("Read %d bytes\n",  k);
+        #endif
+        buf_left+=k;
+        if(k==0 && buf_left == 0){
             break;
         }
         ptr[k]='\0';
@@ -534,6 +578,9 @@ int process_hash_log(hash_table * hash, char * log_path){
         buf2 = buf;
         buf = ptr3;
         ptr = buf;
+        #ifdef DEBUG
+            printf("New Buffer:%s\n", buf);
+        #endif
     }
     #ifdef DEBUG
         printf("Finished Processing Log File\n");

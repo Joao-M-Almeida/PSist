@@ -37,12 +37,14 @@ int log_insert(kv_log * log, uint32_t key, void * to_store, char * (*to_byte_arr
     memcpy(aux2, aux3, strlen(aux3));
     char * ptr = aux2 + strlen(aux3);
     memcpy(ptr, aux, size);
-    fwrite(aux2, sizeof(char), size, log->log_fd);
+    fwrite(aux2, sizeof(char), size+strlen(aux3), log->log_fd);
     #ifdef DEBUG
         printf("Logging insert K: %u S: %u V: ", key, size);
         char * aux99 = to_byte_array(to_store);
         print_bytes(aux99, size);
         free(aux99);
+        printf("logging in the format:" );
+        print_bytes(aux2, size+strlen(aux3));
     #endif
     free(aux);
     free(aux2);
