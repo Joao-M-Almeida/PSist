@@ -2,6 +2,7 @@
 #include "inetutils.h"
 #include "item.h"
 #include "psiskv.h"
+#include "debug.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -56,7 +57,7 @@ int main(int argc, char const *argv[]) {
     int result;
 
     while(1){
-        printf("KVclient options:\n\tW - to write a KeyValue;\n\tR - to read a KeyValue;\n\tD - to delete a KeyValue;\n\tQ - to quit;\n");
+        printf("KVclient options:\n\tW - to write a KeyValue;\n\tR - to read a KeyValue;\n\tD - to delete a KeyValue;\n\t0 - to test \\0;\n\tQ - to quit;\n");
         fgets(buf, BUF_LEN, stdin);
         switch (buf[0]) {
             case 'W':
@@ -112,6 +113,30 @@ int main(int argc, char const *argv[]) {
             case 'Q':
                 printf("Exiting...\n");
                 clean_up(0);
+                break;
+            case '0':
+                printf("Testing \\0... \n");
+                memcpy(value, "\0\0\0\0\0", 5);
+                printf("Sending \\0*5 on key 25...\n");
+                result = kv_write(connection, 25, value, 5,1);
+                if (result > 0){
+                    perror("KVWrite");
+                    clean_up(-1);
+                } else {
+                    printf("Inserted value: %s \n", value);
+                    print_bytes(value, 5);
+                }
+                printf("Reading back...\n");
+                result = kv_read(connection, 25, value, BUF_LEN);
+                if (result == -1){
+                    perror("KVRead");
+                    clean_up(-1);
+                } else if(result==-2){
+                    printf("No Item with key %d\n", key);
+                } else {
+                    printf("Read value: %s \n", value);
+                    print_bytes(value, 5);
+                }
                 break;
             default:
                 printf("Unknown option.\n");
