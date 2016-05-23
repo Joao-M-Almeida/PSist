@@ -90,11 +90,12 @@ void * front_server_puller( void *args ){
         printf("Mega shit (data listen)\n");
     }
 
+    wakeup_front_server();
+
     while(1){
-        wakeup_front_server();
         t = sizeof(remote);
         remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
-        printf("Accept: %d\n", remote_fd);
+
         if(remote_fd != -1){
           printf("I DO (Data)\n");
           connected = 1;
