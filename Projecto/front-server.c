@@ -70,6 +70,8 @@ void * data_server_puller( void *args ){
     strcpy(remote.sun_path, SOCK_PATH);
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
+    unlink(SOCK_PATH);
+
     if (connect(remote_fd, (struct sockaddr *)&remote, len) == -1) {
         connected = 1;
         printf("front connected to data\n");
@@ -97,9 +99,10 @@ void * data_server_puller( void *args ){
         wakeup_data_server();
         t = sizeof(remote);
         remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
+        printf("Accept: %d\n", remote_fd);
         if(remote_fd != -1){
             printf("I DO (Front)\n");
-            connected = 1; 
+            connected = 1;
         }
         while(connected){
             if(TCPsend(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
