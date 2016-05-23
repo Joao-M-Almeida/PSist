@@ -48,7 +48,7 @@ void exit_gracefuly(int signum){
 
 void wakeup_data_server(){
     char *args[] = {"./data_server"};
-    execv("./data_server", args, NULL);
+    execv("./data_server", args);
     exit(0);
 }
 

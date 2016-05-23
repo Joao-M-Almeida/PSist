@@ -39,12 +39,10 @@ int server;
 hash_table * kv_store;
 struct arguments *args;
 
-void * wakeup_front_server( void *args ){
-    pthread_detach(pthread_self());
-    printf("PRE execve\n");
-    execve("./front_server", args, NULL);
-    printf("POS execve\n");
-    return(NULL);
+void wakeup_front_server(){
+    char *args[] = {"./front_server"};
+    execv("./front_server", args);
+    exit(0);
 }
 
 /*int fd;
