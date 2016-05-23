@@ -52,11 +52,10 @@ void exit_gracefuly(int signum){
 }
 
 void wakeup_data_server(){
-    char *args[] = {"data_server"};
+    char *args[] = {"./data_server"};
     int id = fork();
     if(id!=0){
       printf("Resing data server\n");
-      execv("ls", args);
       if(execv("./data_server", args) == -1)
         printf("Error: %d\n", errno);
       printf("bye bye\n");
@@ -167,8 +166,8 @@ int main(int argc, char const *argv[]) {
 
     //definir o conteudo do args
 
-    pthread_create(&pullup_tid, NULL, &data_server_puller, (void *) &args);
-
+    //pthread_create(&pullup_tid, NULL, &data_server_puller, (void *) &args);
+    wakeup_data_server();
     /*Bind all local inet adresses and port*/
     server = TCPcreate(INADDR_ANY, port);
     if (server<0){

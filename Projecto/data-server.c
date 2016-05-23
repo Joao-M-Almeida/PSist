@@ -42,7 +42,7 @@ hash_table * kv_store;
 struct arguments *args;
 
 void wakeup_front_server(){
-    char *args[] = {"front_server"};
+    char *args[] = {"./front_server"};
     int id = fork();
     if(id!=0){
       execv("./front_server", args);
@@ -184,7 +184,7 @@ int main(int argc, char const *argv[]) {
 
     //definir o conteudo do args
 
-    pthread_create(&pullup_tid, NULL, &front_server_puller, (void *) &args);
+    //pthread_create(&pullup_tid, NULL, &front_server_puller, (void *) &args);
 
     /*Bind all local inet adresses and port*/
     server = TCPcreate(INADDR_ANY, port);
