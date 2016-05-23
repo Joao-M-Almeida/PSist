@@ -54,6 +54,7 @@ void wakeup_data_server(){
     if(id!=0){
       printf("Resing data server\n");
       execv("./data_server", args);
+      printf("bye bye");
       exit(0);
     }
     return;
