@@ -52,14 +52,15 @@ void exit_gracefuly(int signum){
 }
 
 void wakeup_data_server(){
-    char *args[] = {"./data_server"};
+    char *args[] = {"data_server"};
     int id = fork();
     if(id!=0){
       printf("Resing data server\n");
+      errno = 0;
       if(execv("./data_server", args) == -1)
         printf("Error: %d\n", errno);
       printf("bye bye\n");
-      exit(0);
+      _exit(-1);
     }
     return;
 }
