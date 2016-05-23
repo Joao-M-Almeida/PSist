@@ -53,7 +53,7 @@ void wakeup_front_server(){
 }
 
 void * front_server_puller( void *args ){
-    /*
+
     unsigned int local_fd, remote_fd;
     struct sockaddr_un local, remote;
     char token = '\n';
@@ -105,7 +105,6 @@ void * front_server_puller( void *args ){
             sleep(1);
         }
     }
-    */
 
     while(1);
     return(NULL);
@@ -163,8 +162,6 @@ int main(int argc, char const *argv[]) {
     /*Threads*/
     pthread_t tid, pullup_tid;
 
-    write(1,"INSIDIOUS\n",11);
-
     /* Capture CTRL-C to exit gracefuly */
     struct sigaction action;
     action.sa_handler = exit_gracefuly;
@@ -185,7 +182,7 @@ int main(int argc, char const *argv[]) {
 
     //definir o conteudo do args
 
-    //pthread_create(&pullup_tid, NULL, &front_server_puller, (void *) &args);
+    pthread_create(&pullup_tid, NULL, &front_server_puller, (void *) &args);
 
     /*Bind all local inet adresses and port*/
     server = TCPcreate(INADDR_ANY, port);

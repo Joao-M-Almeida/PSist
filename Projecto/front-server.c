@@ -48,6 +48,7 @@ void clean_up(int exit_val){
 
 void exit_gracefuly(int signum){
     printf("Received signal: %d\n", signum);
+    unlink(SOCK_PATH);
     clean_up(0);
 }
 
@@ -66,7 +67,7 @@ void wakeup_data_server(){
 }
 
 void * data_server_puller( void *args ){
-    /*
+
     unsigned int local_fd, remote_fd;
     struct sockaddr_un local, remote;
     char token = '\n';
@@ -102,9 +103,9 @@ void * data_server_puller( void *args ){
     if(listen(local_fd, 5) == -1){
         printf("Mega shit (front listen)\n");
     }
-    */
+
     wakeup_data_server();
-    /*
+
     while(1){
         t = sizeof(remote);
         remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
@@ -119,7 +120,7 @@ void * data_server_puller( void *args ){
             sleep(1);
         }
     }
-    */
+
     while(1);
     return(NULL);
 }
