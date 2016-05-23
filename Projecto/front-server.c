@@ -98,12 +98,12 @@ void * data_server_puller( void *args ){
     unlink(local.sun_path);
     len = strlen(local.sun_path) + sizeof(local.sun_family);
     if(bind(local_fd, (struct sockaddr *)&local, len) == -1){
-        printf("Mega shit (front bind)\n");
+        printf("Mega shit (front bind) #%d\n", errno);
         exit_gracefuly(3);
     }
 
     if(listen(local_fd, 5) == -1){
-        printf("Mega shit (front listen)\n");
+        printf("Mega shit (front listen) #%d\n", errno);
         exit_gracefuly(3);
     }
 
