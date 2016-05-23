@@ -74,7 +74,7 @@ void * front_server_puller( void *args ){
         }
     }
     close(remote_fd);
-    
+
     local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     local.sun_family = AF_UNIX;
@@ -158,7 +158,7 @@ int main(int argc, char const *argv[]) {
     unsigned short port = DEFAULTPORT;
 
     /*Threads*/
-    pthread_t tid;
+    pthread_t tid, pullup_tid;
 
     write(1,"INSIDIOUS\n",11);
 
