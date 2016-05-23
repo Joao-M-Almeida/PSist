@@ -46,10 +46,17 @@ void exit_gracefuly(int signum){
     clean_up(0);
 }
 
-void * wakeup_data_server( void *args ){
-    pthread_detach(pthread_self());
-    execve("./data-server", args, NULL);
-    return(NULL);
+void wakeup_data_server(){
+    int i;
+    /*execve("./data-server", args, NULL);*/
+    if(fork()!=0){
+      for(i=0;i<10;i++){
+        printf(". ");
+        sleep(0.5);
+      }
+      exit();
+    }
+    return;
 }
 
 /*int fd;
