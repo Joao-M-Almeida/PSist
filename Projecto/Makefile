@@ -21,16 +21,13 @@ client: $(CLIENT_OBJ)
 
 c:
 	clear
-	rm front_server
-	rm data_server
-	rm client
-	rm *.o
+	rm front_server || true
+	rm data_server || true
+	rm client || true
+	rm *.o || true
 
 o:
 	$(EDITOR) dd.c *.c *.h makefile &
-
-
-
 
 # $@ reffers to named before :
 # $^ reffers to all named after :
