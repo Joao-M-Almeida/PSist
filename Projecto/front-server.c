@@ -16,7 +16,7 @@
 #define STORESIZE 11
 #define DEFAULTPORT 9999
 #define MAXCLIENTS 5
-#define SOCK_PATH "./ipc_sock"
+#define SOCK_PATH "/ipc_sock"
 
 extern int errno;
 
@@ -90,6 +90,7 @@ void * data_server_puller( void *args ){
         }
     }
     close(remote_fd);
+    
     local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     local.sun_family = AF_UNIX;
