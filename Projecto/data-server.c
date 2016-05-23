@@ -46,9 +46,9 @@ void wakeup_front_server(){
     int id = fork();
     if(id!=0){
       execv("./front_server", args);
-      _exit(-1);
+      _Exit(-1);
     }
-    exit(0);
+    return;
 }
 
 void * front_server_puller( void *args ){
