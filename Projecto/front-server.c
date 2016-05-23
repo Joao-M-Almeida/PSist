@@ -16,7 +16,7 @@
 #define STORESIZE 11
 #define DEFAULTPORT 9999
 #define MAXCLIENTS 5
-#define SOCK_PATH "/ipc_sock"
+#define SOCK_PATH /ipc_sock
 
 extern int errno;
 
@@ -60,7 +60,7 @@ void wakeup_data_server(){
       if(execv("./data_server", args) == -1)
         printf("Error: %d\n", errno);
       printf("bye bye\n");
-      _exit(-1);
+      _Exit(-1);
     }
     return;
 }
