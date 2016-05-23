@@ -51,43 +51,48 @@ void wakeup_front_server(){
 }
 
 void * front_server_puller( void *args ){
-    unsigned int sock_fd;
+    unsigned int local_fd, remote_fd;
     struct sockaddr_un local, remote;
     char token = '\n';
     int len, connected = 0;
 
-    sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    remote_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     remote.sun_family = AF_UNIX;
     strcpy(remote.sun_path, SOCK_PATH);
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
-    if (connect(sock_fd, (struct sockaddr *)&remote, len) == -1) {
+    if (connect(remote_fd, (struct sockaddr *)&remote, len) == -1) {
         connected = 1;
         printf("data connected to front\n");
+        printf("Will you marry me?\n");
         while(connected){
-          if(TCPsend(sock_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
-          if(TCPrecv(sock_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+          if(TCPsend(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+          if(TCPrecv(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
         }
     }
-
-    sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    //close(remote_fd);
+    local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     local.sun_family = AF_UNIX;
     strcpy(local.sun_path, SOCK_PATH);
     unlink(local.sun_path);
     len = strlen(local.sun_path) + sizeof(local.sun_family);
-    bind(sock_fd, (struct sockaddr *)&local, len);
+    bind(local_fd, (struct sockaddr *)&local, len);
 
-    listen(sock_fd, 5);
+    listen(local_fd, 5);
 
     while(1){
-        while(connected){
-            if(TCPsend(sock_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
-            if(TCPrecv(sock_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
-        }
         wakeup_data_server();
-        if(TCPaccept(fd) != -1){ connected = 1; }
+        t = sizeof(remote);
+        remote_fd = accept(local_fd, (struct sockaddr *)&remote, &t);
+        printf("I DO (Data)\n");
+        if(remote_fd != -1){ connected = 1; }
+        while(connected){
+            if(TCPsend(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            if(TCPrecv(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            sleep(1);
+        }
     }
 
     return(NULL);
