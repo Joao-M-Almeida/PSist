@@ -17,6 +17,7 @@
 #define STORESIZE 11
 #define DEFAULTPORT 9998
 #define MAXCLIENTS 5
+#define SOCK_PATH "/ipc_sock"
 
 /*
 Server to handle acess to the Key Value store. Also  serves plenty of clients at a time.
@@ -41,59 +42,54 @@ struct arguments *args;
 
 void wakeup_front_server(){
     char *args[] = {"./front_server"};
-    execv("./front_server", args);
+    int id = fork();
+    if(id!=0){
+      execv("./front_server", args);
+      exit(0);
+    }
     exit(0);
 }
 
-/*int fd;
-int connected = 0;
-int front_server_port = 10100;
-int data_server_port = 10101;
-char token = '\n';
-pthread_detach(pthread_self());
-
-fd = socket(AF_UNIX, SOCK_STREAM, 0);
-if(fd==-1){ return(NULL); }
-
-memset(&address, 0, sizeof(address));
-address.sin_family = AF_UNIX;
-address.sin_addr.s_addr = htonl(atoh("0.0.0.0"));
-address.sin_port = htons(front_server_port);
-
-if(connect(fd, (struct sockaddr*)&address, sizeof(address)) != -1){
-    connected = 1;
-    while(connected){
-        if(TCPsend(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
-        if(TCPrecv(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
-    }
-}
-
-fd = socket(AF_UNIX, SOCK_STREAM, 0);
-address.sin_addr.s_addr = htonl(INADDR_ANY);
-address.sin_port = htons(data_server_port);
-if(bind(fd, (struct sockaddr*)&address, sizeof(address))==-1){ return(NULL); }
-if(listen(fd, MAXCLIENTS)){ return(NULL); }
-
-while(1){
-    while(connected){
-        if(TCPsend(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
-        if(TCPrecv(fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
-    }
-    pthread_create(&tid, NULL, &wakeup_front_server, (void *) &args);
-    if(TCPaccept(fd) != -1){ connected = 1; }
-}
-*/
-
 void * front_server_puller( void *args ){
-    /*
-    pthread_t tid;
-    unsigned int s, s2;
+    unsigned int sock_fd;
     struct sockaddr_un local, remote;
-    int len;
-    */
-    printf("Hello from inside front server puller\n");
+    char token = '\n';
+    int len, connected = 0;
 
-    printf("Byeub\n");
+    sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+
+    remote.sun_family = AF_UNIX;
+    strcpy(remote.sun_path, SOCK_PATH);
+    len = strlen(remote.sun_path) + sizeof(remote.sun_family);
+
+    if (connect(sock_fd, (struct sockaddr *)&remote, len) == -1) {
+        connected = 1;
+        printf("data connected to front\n");
+        while(connected){
+          if(TCPsend(sock_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+          if(TCPrecv(sock_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+        }
+    }
+
+    sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+
+    local.sun_family = AF_UNIX;
+    strcpy(local.sun_path, SOCK_PATH);
+    unlink(local.sun_path);
+    len = strlen(local.sun_path) + sizeof(local.sun_family);
+    bind(sock_fd, (struct sockaddr *)&local, len);
+
+    listen(sock_fd, 5);
+
+    while(1){
+        while(connected){
+            if(TCPsend(sock_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            if(TCPrecv(sock_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+        }
+        wakeup_data_server();
+        if(TCPaccept(fd) != -1){ connected = 1; }
+    }
+
     return(NULL);
 }
 
