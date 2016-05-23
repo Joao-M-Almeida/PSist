@@ -42,7 +42,7 @@ struct arguments *args;
 void * wakeup_front_server( void *args ){
     pthread_detach(pthread_self());
     printf("PRE execve\n");
-    execve("./front-server", args, NULL);
+    execve("./front_server", args, NULL);
     printf("POS execve\n");
     return(NULL);
 }
