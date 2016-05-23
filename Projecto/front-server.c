@@ -16,7 +16,7 @@
 #define STORESIZE 11
 #define DEFAULTPORT 9999
 #define MAXCLIENTS 5
-#define SOCK_PATH "/ipc_sock"
+#define SOCK_PATH "./ipc_sock"
 
 extern int errno;
 
