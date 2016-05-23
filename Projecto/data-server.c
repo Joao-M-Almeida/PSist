@@ -73,6 +73,7 @@ void * front_server_puller( void *args ){
         }
     }
     //close(remote_fd);
+    /*
     local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     local.sun_family = AF_UNIX;
@@ -102,7 +103,7 @@ void * front_server_puller( void *args ){
             sleep(1);
         }
     }
-
+    */
     return(NULL);
 }
 

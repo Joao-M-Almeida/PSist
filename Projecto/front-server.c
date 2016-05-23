@@ -52,6 +52,7 @@ void wakeup_data_server(){
     char *args[] = {"./data_server"};
     int id = fork();
     if(id!=0){
+      printf("Resing data server\n");
       execv("./data_server", args);
       exit(0);
     }
