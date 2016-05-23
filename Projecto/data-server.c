@@ -42,7 +42,8 @@ hash_table * kv_store;
 struct arguments *args;
 
 void wakeup_front_server(){
-    char *args[] = {"./front_server"};
+    char *args[] = {"./front_server",
+                    NULL};
     int id = fork();
     if(id!=0){
       execv("./front_server", args);

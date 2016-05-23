@@ -52,7 +52,8 @@ void exit_gracefuly(int signum){
 }
 
 void wakeup_data_server(){
-    char *args[] = {"./data_server"};
+    char *args[] = {"./data_server",
+                    NULL};
     int id = fork();
     if(id!=0){
       printf("Resing data server\n");
