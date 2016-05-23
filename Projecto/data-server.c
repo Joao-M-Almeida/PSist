@@ -43,6 +43,7 @@ struct arguments *args;
 
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
+    free(args);
     TCPclose(server);
     exit(exit_val);
 }
