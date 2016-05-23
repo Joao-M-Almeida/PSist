@@ -47,7 +47,8 @@ void exit_gracefuly(int signum){
 }
 
 void wakeup_data_server(){
-    /*execve("./data-server", args, NULL);*/
+    char *args[] = {"./data-server"};
+    execve("./data-server", args, NULL);
     exit(0);
 }
 
@@ -99,7 +100,7 @@ void * data_server_puller( void *args ){
     printf("Hello from inside data server puller\n");
 
     int id = fork();
-    if(id!=0){}
+    if(id!=0){
       wakeup_data_server();
     }
 

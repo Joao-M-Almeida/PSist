@@ -151,6 +151,7 @@ int main(int argc, char const *argv[]) {
     /*Threads*/
     pthread_t tid;
 
+    write(1,"INSIDIOUS\n",11);
 
     /* Capture CTRL-C to exit gracefuly */
     struct sigaction action;
