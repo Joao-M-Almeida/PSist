@@ -72,7 +72,7 @@ void * front_server_puller( void *args ){
           if(TCPrecv(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
         }
     }
-    //close(remote_fd);
+    close(remote_fd);
     /*
     local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 

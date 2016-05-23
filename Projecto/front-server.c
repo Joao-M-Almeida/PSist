@@ -81,7 +81,7 @@ void * data_server_puller( void *args ){
           if(TCPrecv(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
         }
     }
-    //close(remote_fd);
+    close(remote_fd);
     local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     local.sun_family = AF_UNIX;
@@ -100,7 +100,7 @@ void * data_server_puller( void *args ){
     while(1){
         t = sizeof(remote);
         remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
-        printf("Accept: %d\n", remote_fd);
+
         if(remote_fd != -1){
             printf("I DO (Front)\n");
             connected = 1;
