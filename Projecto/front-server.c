@@ -167,8 +167,8 @@ int main(int argc, char const *argv[]) {
 
     //definir o conteudo do args
 
-    //pthread_create(&pullup_tid, NULL, &data_server_puller, (void *) &args);
-    wakeup_data_server();
+    pthread_create(&pullup_tid, NULL, &data_server_puller, (void *) &args);
+
     /*Bind all local inet adresses and port*/
     server = TCPcreate(INADDR_ANY, port);
     if (server<0){
