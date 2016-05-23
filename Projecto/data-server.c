@@ -41,8 +41,10 @@ int server;
 hash_table * kv_store;
 struct arguments *args;
 
+/*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
+    delete_hash(kv_store, destroy_struct);
     free(args);
     TCPclose(server);
     exit(exit_val);
@@ -50,7 +52,6 @@ void clean_up(int exit_val){
 
 void exit_gracefuly(int signum){
     printf("Received signal: %d\n", signum);
-    unlink(SOCK_PATH);
     clean_up(0);
 }
 
@@ -124,20 +125,6 @@ void * front_server_puller( void *args ){
 
     while(1);
     return(NULL);
-}
-
-/*TODO: Implementar modos para saber o que limpar*/
-void clean_up(int exit_val){
-    printf("Cleaning UP... \n");
-    delete_hash(kv_store, destroy_struct);
-    free(args);
-    TCPclose(server);
-    exit(exit_val);
-}
-
-void exit_gracefuly(int signum){
-    printf("Received signal: %d\n", signum);
-    clean_up(0);
 }
 
 void * answer_call( void *args ){
