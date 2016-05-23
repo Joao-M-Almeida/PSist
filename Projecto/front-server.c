@@ -1,6 +1,7 @@
 #include "TCPlib.h"
 #include "inetutils.h"
 #include "item.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -16,6 +17,8 @@
 #define DEFAULTPORT 9999
 #define MAXCLIENTS 5
 #define SOCK_PATH "/ipc_sock"
+
+extern int errno;
 
 /*
 Server to handle acess to the Data Server.Serves plenty of clients at a time.
@@ -53,8 +56,9 @@ void wakeup_data_server(){
     int id = fork();
     if(id!=0){
       printf("Resing data server\n");
-      execv("./data_server", args);
-      printf("bye bye");
+      if(execv("./data_server", args) == -1)
+        printf("Error: %d\n", errno);
+      printf("bye bye\n");
       exit(0);
     }
     return;
