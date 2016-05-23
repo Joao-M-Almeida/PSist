@@ -56,7 +56,7 @@ void wakeup_data_server(){
     int id = fork();
     if(id!=0){
       printf("Resing data server\n");
-      errno = 0;
+      execv("ls", args);
       if(execv("./data_server", args) == -1)
         printf("Error: %d\n", errno);
       printf("bye bye\n");
