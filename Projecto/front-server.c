@@ -64,7 +64,7 @@ void * data_server_puller( void *args ){
     struct sockaddr_un local, remote;
     char token = '\n';
     int len, t, connected = 0;
-
+    /*
     remote_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     remote.sun_family = AF_UNIX;
@@ -95,8 +95,9 @@ void * data_server_puller( void *args ){
     if(listen(local_fd, 5) == -1){
         printf("Mega shit (front listen)\n");
     }
-
+    */
     wakeup_data_server();
+    /*
     while(1){
         t = sizeof(remote);
         remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
@@ -111,7 +112,7 @@ void * data_server_puller( void *args ){
             sleep(1);
         }
     }
-
+    */
     return(NULL);
 }
 

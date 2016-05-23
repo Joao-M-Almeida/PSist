@@ -52,6 +52,7 @@ void wakeup_front_server(){
 }
 
 void * front_server_puller( void *args ){
+    /*
     unsigned int local_fd, remote_fd;
     struct sockaddr_un local, remote;
     char token = '\n';
@@ -73,7 +74,7 @@ void * front_server_puller( void *args ){
         }
     }
     close(remote_fd);
-    /*
+    
     local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     local.sun_family = AF_UNIX;
@@ -178,6 +179,10 @@ int main(int argc, char const *argv[]) {
 
     /*Create arguments structure*/
     args = (struct arguments *) malloc(sizeof(struct arguments));
+
+    //definir o conteudo do args
+
+    pthread_create(&pullup_tid, NULL, &front_server_puller, (void *) &args);
 
     /*Bind all local inet adresses and port*/
     server = TCPcreate(INADDR_ANY, port);
