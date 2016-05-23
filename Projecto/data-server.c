@@ -55,7 +55,7 @@ void * front_server_puller( void *args ){
     unsigned int local_fd, remote_fd;
     struct sockaddr_un local, remote;
     char token = '\n';
-    int len, connected = 0;
+    int len, t, connected = 0;
 
     remote_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
@@ -88,9 +88,9 @@ void * front_server_puller( void *args ){
     }
 
     while(1){
-        wakeup_data_server();
+        wakeup_front_server();
         t = sizeof(remote);
-        remote_fd = accept(local_fd, (struct sockaddr *)&remote, &t);
+        remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
         printf("I DO (Data)\n");
         if(remote_fd != -1){ connected = 1; }
         while(connected){

@@ -96,7 +96,7 @@ void * data_server_puller( void *args ){
     while(1){
         wakeup_data_server();
         t = sizeof(remote);
-        remote_fd = accept(local_fd, (struct sockaddr *)&remote, &t);
+        remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
         printf("I DO (Front)\n");
         if(remote_fd != -1){ connected = 1; }
         while(connected){
