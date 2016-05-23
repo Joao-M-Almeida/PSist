@@ -47,16 +47,8 @@ void exit_gracefuly(int signum){
 }
 
 void wakeup_data_server(){
-    int i;
     /*execve("./data-server", args, NULL);*/
-    if(fork()!=0){
-      for(i=0;i<10;i++){
-        printf(". ");
-        sleep(0.5);
-      }
-      exit();
-    }
-    return;
+    exit(0);
 }
 
 /*int fd;
@@ -106,7 +98,12 @@ void * data_server_puller( void *args ){
     */
     printf("Hello from inside data server puller\n");
 
-    printf("Bubye\n");
+    int id = fork();
+    if(id!=0){}
+      wakeup_data_server();
+    }
+
+    printf("Bubye %d\n", id);
     return(NULL);
 }
 
