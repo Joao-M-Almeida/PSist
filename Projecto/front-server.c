@@ -60,11 +60,12 @@ void wakeup_data_server(){
 }
 
 void * data_server_puller( void *args ){
+    /*
     unsigned int local_fd, remote_fd;
     struct sockaddr_un local, remote;
     char token = '\n';
     int len, t, connected = 0;
-    /*
+
     remote_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     remote.sun_family = AF_UNIX;
@@ -113,6 +114,7 @@ void * data_server_puller( void *args ){
         }
     }
     */
+    while(1);
     return(NULL);
 }
 

@@ -105,6 +105,7 @@ void * front_server_puller( void *args ){
         }
     }
     */
+    while(1);
     return(NULL);
 }
 
