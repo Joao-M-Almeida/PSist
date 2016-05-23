@@ -41,6 +41,18 @@ int server;
 hash_table * kv_store;
 struct arguments *args;
 
+void clean_up(int exit_val){
+    printf("Cleaning UP... \n");
+    TCPclose(server);
+    exit(exit_val);
+}
+
+void exit_gracefuly(int signum){
+    printf("Received signal: %d\n", signum);
+    unlink(SOCK_PATH);
+    clean_up(0);
+}
+
 void wakeup_front_server(){
     char *args[] = {"./front_server",
                     NULL};

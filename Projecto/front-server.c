@@ -36,12 +36,10 @@ struct arguments {
 };
 
 int server;
-struct arguments *args;
 
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
-    free(args);
     TCPclose(server);
     exit(exit_val);
 }
