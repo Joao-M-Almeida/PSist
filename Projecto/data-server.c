@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/ip.h>
 #include <pthread.h>
 #include <string.h>
