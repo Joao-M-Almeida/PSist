@@ -84,10 +84,14 @@ void * data_server_puller( void *args ){
     strcpy(local.sun_path, SOCK_PATH);
     unlink(local.sun_path);
     len = strlen(local.sun_path) + sizeof(local.sun_family);
-    bind(local_fd, (struct sockaddr *)&local, len);
+    if(bind(local_fd, (struct sockaddr *)&local, len) == -1){
+        printf("Mega shit (front bind)\n");
+    }
 
-    listen(local_fd, 5);
-    
+    if(listen(local_fd, 5) == -1){
+        printf("Mega shit (front listen)\n");
+    }
+
     while(1){
         wakeup_data_server();
         t = sizeof(remote);
