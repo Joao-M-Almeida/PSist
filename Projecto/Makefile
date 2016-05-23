@@ -21,10 +21,10 @@ client: $(CLIENT_OBJ)
 
 c:
 	clear
-	rm front_server || true
-	rm data_server || true
-	rm client || true
-	rm *.o || true
+	@rm front_server || true
+	@rm data_server || true
+	@rm client || true
+	@rm *.o || true
 
 o:
 	$(EDITOR) dd.c *.c *.h makefile &

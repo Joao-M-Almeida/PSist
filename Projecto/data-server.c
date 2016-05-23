@@ -84,10 +84,12 @@ void * front_server_puller( void *args ){
     len = strlen(local.sun_path) + sizeof(local.sun_family);
     if(bind(local_fd, (struct sockaddr *)&local, len) == -1){
       printf("Mega shit (data bind)\n");
+      exit_gracefuly(3);
     }
 
     if(listen(local_fd, 5) == -1){
         printf("Mega shit (data listen)\n");
+        exit_gracefuly(3);
     }
 
     wakeup_front_server();

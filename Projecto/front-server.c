@@ -90,7 +90,7 @@ void * data_server_puller( void *args ){
         }
     }
     close(remote_fd);
-    
+
     local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     local.sun_family = AF_UNIX;
@@ -99,10 +99,12 @@ void * data_server_puller( void *args ){
     len = strlen(local.sun_path) + sizeof(local.sun_family);
     if(bind(local_fd, (struct sockaddr *)&local, len) == -1){
         printf("Mega shit (front bind)\n");
+        exit_gracefuly(3);
     }
 
     if(listen(local_fd, 5) == -1){
         printf("Mega shit (front listen)\n");
+        exit_gracefuly(3);
     }
 
     wakeup_data_server();
