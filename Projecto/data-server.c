@@ -18,7 +18,7 @@
 #define STORESIZE 11
 #define DEFAULTPORT 9998
 #define MAXCLIENTS 5
-#define SOCK_PATH "/ipc_sock"
+#define SOCK_PATH /ipc_sock
 
 /*
 Server to handle acess to the Key Value store. Also  serves plenty of clients at a time.
