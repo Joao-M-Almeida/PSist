@@ -96,8 +96,8 @@ void * data_server_puller( void *args ){
         printf("Mega shit (front listen)\n");
     }
 
+    wakeup_data_server();
     while(1){
-        wakeup_data_server();
         t = sizeof(remote);
         remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
         printf("Accept: %d\n", remote_fd);
