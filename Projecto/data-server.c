@@ -91,8 +91,11 @@ void * front_server_puller( void *args ){
         wakeup_front_server();
         t = sizeof(remote);
         remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
-        printf("I DO (Data)\n");
-        if(remote_fd != -1){ connected = 1; }
+        printf("Accept: %d\n", remote_fd);
+        if(remote_fd != -1){
+          printf("I DO (Data)\n");
+          connected = 1;
+        }
         while(connected){
             if(TCPsend(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
             if(TCPrecv(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }

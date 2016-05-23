@@ -97,8 +97,10 @@ void * data_server_puller( void *args ){
         wakeup_data_server();
         t = sizeof(remote);
         remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
-        printf("I DO (Front)\n");
-        if(remote_fd != -1){ connected = 1; }
+        if(remote_fd != -1){
+            printf("I DO (Front)\n");
+            connected = 1; 
+        }
         while(connected){
             if(TCPsend(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
             if(TCPrecv(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
