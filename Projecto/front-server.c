@@ -58,16 +58,15 @@ void wakeup_data_server(){
                     NULL};
     int id = fork();
     if(id!=0){
-      printf("Resing data server\n");
-      if(execv("./data_server", args) == -1)
-        printf("Error: %d\n", errno);
-      printf("bye bye\n");
-      _Exit(-1);
+        printf("(FRONT) Resing data server %d\n", id);
+        if(execv("./data_server", args) == -1)
+            printf("Error: %d\n", errno);
+        _Exit(-1);
     }
     return;
 }
 
-void * data_server_puller( void *args ){
+void data_server_puller(){
 
     unsigned int local_fd, remote_fd;
     struct sockaddr_un local, remote;
@@ -127,8 +126,7 @@ void * data_server_puller( void *args ){
         }
     }
 
-    while(1);
-    return(NULL);
+    return;
 }
 
 void * answer_call( void *args ){
@@ -155,7 +153,7 @@ int main(int argc, char const *argv[]) {
     unsigned short port = FRONT_SERVER_PORT;
 
     /*Threads*/
-    pthread_t call_tid, pullup_tid;
+    pthread_t call_tid, pullup_pid;
 
     /* Capture CTRL-C to exit gracefuly */
     struct sigaction action;
@@ -173,8 +171,13 @@ int main(int argc, char const *argv[]) {
     args = (struct arguments *) malloc(sizeof(struct arguments));
 
     //definir o conteudo do args
-    if(JESUS_POWER)
-        pthread_create(&pullup_tid, NULL, &data_server_puller, (void *) &args);
+    if(JESUS_POWER){
+        pullup_pid = fork();
+        if(pullup_pid!=0){
+            data_server_puller();
+            _Exit(-1);
+        }
+    }
 
     /*Bind all local inet adresses and port*/
     server = TCPcreate(INADDR_ANY, port);

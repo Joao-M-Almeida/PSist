@@ -5,6 +5,8 @@ FRONT_SERVER_OBJ = front-server.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o 
 DATA_SERVER_OBJ = data-server.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o
 EDITOR = gedit
 
+all: main client
+
 main: front_server data_server
 
 front_server: $(FRONT_SERVER_OBJ)
