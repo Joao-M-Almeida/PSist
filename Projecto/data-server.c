@@ -16,10 +16,10 @@
 #include <sys/types.h>
 
 #define STORESIZE 11
-#define DEFAULTPORT 9998
+#define DATA_SERVER_PORT 9998
 #define MAXCLIENTS 5
 #define SOCK_PATH "./ipc_sock"
-
+#define JESUS_POWER 1
 /*
 Server to handle acess to the Key Value store. Also  serves plenty of clients at a time.
 
@@ -60,8 +60,9 @@ void wakeup_front_server(){
                     NULL};
     int id = fork();
     if(id!=0){
-      execv("./front_server", args);
-      _Exit(-1);
+        printf("Resing front server\n");
+        execv("./front_server", args);
+        _Exit(-1);
     }
     return;
 }
@@ -79,15 +80,18 @@ void * front_server_puller( void *args ){
     strcpy(remote.sun_path, SOCK_PATH);
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
-    if (connect(remote_fd, (struct sockaddr *)&remote, len) == -1) {
+    if (connect(remote_fd, (struct sockaddr *)&remote, len) != -1) {
         connected = 1;
         printf("data connected to front\n");
         printf("Will you marry me?\n");
         while(connected){
-          if(TCPsend(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
-          if(TCPrecv(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            if(TCPsend(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            if(TCPrecv(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            /*printf("(DATA) ping: %c", token);*/
+            sleep(1);
         }
     }
+    printf("But you promissed ):\n");
     close(remote_fd);
 
     local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -117,9 +121,10 @@ void * front_server_puller( void *args ){
           connected = 1;
         }
         while(connected){
-            if(TCPsend(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
             if(TCPrecv(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
+            /*printf("(DATA) ping: %c", token);*/
             sleep(1);
+            if(TCPsend(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
         }
     }
 
@@ -131,10 +136,10 @@ void * answer_call( void *args ){
     struct arguments *_args = *((struct arguments **) args);
     int sock_fd = _args->sock_fd;
 
-    /*printf("\n\n\t#NEW THREAD\n");*/
+    printf("\n\n\t#NEW THREAD\n");
 
     pthread_detach(pthread_self());
-    /*printf("\tSock_fd: %d\n\n\n", sock_fd);*/
+    printf("\tSock_fd: %d\n\n\n", sock_fd);
 
     while (1) {
         int err = process_psiskv_prequest(sock_fd,kv_store);
@@ -152,7 +157,7 @@ void * answer_call( void *args ){
     }
 
     close(sock_fd);
-    /*printf("\t#END OF THREAD\n\n");*/
+    printf("\t#END OF THREAD\n\n");
 
     return(NULL);
 }
@@ -160,7 +165,7 @@ void * answer_call( void *args ){
 int main(int argc, char const *argv[]) {
     /* code */
 
-    unsigned short port = DEFAULTPORT;
+    unsigned short port = DATA_SERVER_PORT;
 
     /*Threads*/
     pthread_t tid, pullup_tid;
@@ -184,8 +189,8 @@ int main(int argc, char const *argv[]) {
     args = (struct arguments *) malloc(sizeof(struct arguments));
 
     //definir o conteudo do args
-
-    pthread_create(&pullup_tid, NULL, &front_server_puller, (void *) &args);
+    if(JESUS_POWER)
+        pthread_create(&pullup_tid, NULL, &front_server_puller, (void *) &args);
 
     /*Bind all local inet adresses and port*/
     server = TCPcreate(INADDR_ANY, port);
@@ -202,8 +207,9 @@ int main(int argc, char const *argv[]) {
     }
 
     int incoming;
+    printf("Server Waiting for connections @ 127.0.0.1:%d\n", port);
     while (1) {
-        printf("Server Waiting for connection\n");
+        printf("Waiting\n");
 
         incoming = TCPaccept(server);
 
