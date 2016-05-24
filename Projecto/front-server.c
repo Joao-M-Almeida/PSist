@@ -19,7 +19,7 @@
 #define SOCK_PATH "./ipc_sock"
 #define JESUS_POWER 1
 
-extern int errno;
+/*extern int errno;*/
 
 /*
 Server to handle acess to the Data Server.Serves plenty of clients at a time.
@@ -54,12 +54,12 @@ void exit_gracefuly(int signum){
 }
 
 void wakeup_data_server(){
-    char *args[] = {"./data_server",
+    char *args[] = {(char  *) "./data_server.out",
                     NULL};
     int id = fork();
     if(id!=0){
         printf("(FRONT) Resing data server %d\n", id);
-        if(execv("./data_server", args) == -1)
+        if(execv("./data_server.out", args) == -1)
             printf("Error: %d\n", errno);
         _Exit(-1);
     }
@@ -68,7 +68,7 @@ void wakeup_data_server(){
 
 void data_server_puller(){
 
-    unsigned int local_fd, remote_fd;
+    int local_fd,remote_fd;
     struct sockaddr_un local, remote;
     char token = '\n';
     int len, t, connected = 0;

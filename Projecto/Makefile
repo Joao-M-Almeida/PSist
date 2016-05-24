@@ -5,17 +5,17 @@ FRONT_SERVER_OBJ = front-server.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o 
 DATA_SERVER_OBJ = data-server.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o
 EDITOR = gedit
 
-all: main client
+all: main client.out
 
-main: front_server data_server
+main: front_server.out data_server.out
 
-front_server: $(FRONT_SERVER_OBJ)
+front_server.out: $(FRONT_SERVER_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -pthread
 
-data_server: $(DATA_SERVER_OBJ)
+data_server.out: $(DATA_SERVER_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -pthread
 
-client: $(CLIENT_OBJ)
+client.out: $(CLIENT_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@
 
 %.o: %.c $(DEPS)

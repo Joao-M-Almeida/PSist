@@ -38,7 +38,6 @@ const char * msg_type_to_str(int type){
 }
 
 int kv_connect(char * kv_server_ip, int kv_server_port){
-    /* TODO: receber o endereço do DS e conectar se a ele */
 
     char buffer[128];
     char data_server_ip[32];
@@ -51,13 +50,17 @@ int kv_connect(char * kv_server_ip, int kv_server_port){
 
     TCPclose(server_fd);
 
-    printf("> %s\n", buffer);
+    #ifdef DEBUG
+        printf("Received: %s\n", buffer);
+    #endif
 
     if((sscanf(buffer, "%[^:]:%d", data_server_ip, &data_server_port)) == -1){
         return -1;
     }
 
-    printf("Data Server Location: %s:%d\n", data_server_ip, data_server_port);
+    #ifdef DEBUG
+        printf("Data Server Location: %s:%d\n", data_server_ip, data_server_port);
+    #endif
 
     return TCPconnect(atoh(data_server_ip), (unsigned short) data_server_port);
 }

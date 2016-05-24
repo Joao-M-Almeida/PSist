@@ -20,6 +20,8 @@
 #define MAXCLIENTS 5
 #define SOCK_PATH "./ipc_sock"
 #define JESUS_POWER 1
+#define FS_PATH "./front_server.out"
+
 /*
 Server to handle acess to the Key Value store. Also  serves plenty of clients at a time.
 
@@ -56,12 +58,12 @@ void exit_gracefuly(int signum){
 }
 
 void wakeup_front_server(){
-    char *args[] = {"./front_server",
+    char *args[] = { (char *) FS_PATH,
                     NULL};
     int id = fork();
     if(id!=0){
         printf("(DATA) Resing front server %d\n", id);
-        execv("./front_server", args);
+        execv(FS_PATH, args);
         _Exit(-1);
     }
     return;
@@ -69,7 +71,7 @@ void wakeup_front_server(){
 
 void front_server_puller(){
 
-    unsigned int local_fd, remote_fd;
+    int local_fd, remote_fd;
     struct sockaddr_un local, remote;
     char token = '\n';
     int len, t, connected = 0;
