@@ -65,7 +65,7 @@ int process_psiskv_prequest(int kv_descriptor, hash_table * store){
 /* deve receber mais uma função para criação correcta do item */
 /* deve receber mais uma função, que deve guardar como argumento,
     para a destruição do item*/
-value_struct * create_struct( unsigned int size, uint8_t *value ){
+void * create_struct( unsigned int size, uint8_t *value ){
     value_struct * vs;
     vs = (value_struct *) malloc(sizeof(value_struct));
     vs->size = size;
@@ -92,6 +92,37 @@ void destroy_struct(void * void_to_destroy) {
     free(to_destroy);
 }
 
+char * struct_to_str(void * void_to_str){
+    value_struct * to_str = (value_struct * ) void_to_str;
+    char * str = (char *) malloc(sizeof(char) * ( to_str->size+1));
+    memcpy(str, (char *) to_str->value, to_str->size);
+    str[to_str->size] = '\0';
+    return str;
+}
+
+uint32_t struct_get_size(void * strct_size){
+    value_struct * strct = (value_struct * ) strct_size;
+    return strct->size;
+}
+
+
+/*Str is \0 terminated so remove it*/
+void * create_struct_from_str( char * str){
+    value_struct * vs;
+    vs = (value_struct *) malloc(sizeof(value_struct));
+    int size = strlen(str);
+    uint8_t * value = (uint8_t *) malloc(sizeof(uint8_t)*size);
+
+    /*TODO: copy from str to value*/
+
+    memcpy(value, str,size);
+
+    vs->size = size;
+    vs->value = value;
+    return vs;
+}
+
+
 int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int value_len, int overwrite){
     int err;
     /*Now read value_len bytes from the socket*/
@@ -105,7 +136,7 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
         printf("Value received: %s\n", (char *) item );
     #endif
 
-    value_struct * to_store = create_struct(value_len, item );
+    value_struct * to_store = (value_struct *) create_struct(value_len, item );
 
 
     kv_msg message;
@@ -114,7 +145,7 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
     message.value_len = 0;
 
     /*Insert the item on the hash store*/
-    err = insert_item(store,to_store,key,overwrite, destroy_struct);
+    err = insert_item(store,to_store,key,overwrite, 1);
     #ifdef DEBUG
         printf("insert_item returned %d\n", err);
     #endif
@@ -126,6 +157,7 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
         #ifdef DEBUG
             printf("Item already exists and didn't overwrite\n");
         #endif
+        destroy_struct(to_store);
     }
 
 
@@ -142,7 +174,7 @@ int read_preq(hash_table * store, int kv_descriptor, uint32_t key){
 
     value_struct * to_send;
 
-    to_send = (value_struct *) read_item(store, key, copy_struct);
+    to_send = (value_struct *) read_item(store, key);
 
     if(to_send == NULL){
         #ifdef DEBUG
@@ -189,7 +221,7 @@ int delete_preq(hash_table * store, int kv_descriptor, uint32_t key){
     message.type = DELETE_RESP;
     message.key = 0;
 
-    if (!delete_item(store, key, destroy_struct)){
+    if (!delete_item(store, key,1)){
         /*Item doesn't exist*/
         message.value_len = 0;
     } else{

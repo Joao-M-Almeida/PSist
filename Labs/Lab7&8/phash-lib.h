@@ -12,7 +12,6 @@ typedef void (*delete_func) (Item);
 typedef char * (*to_byte_array) (Item);
 typedef uint32_t (*get_size) (Item);
 
-
 typedef struct _hash_item {
     struct _hash_item *next;
     uint32_t key;
