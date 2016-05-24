@@ -94,7 +94,6 @@ int main(int argc, char const *argv[]) {
     /*Threads*/
     pthread_t tid;
 
-
     /* Capture CTRL-C to exit gracefuly */
     struct sigaction action;
     action.sa_handler = exit_gracefuly;

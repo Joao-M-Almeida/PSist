@@ -4,6 +4,7 @@
 #include "item.h"
 #include "psiskv.h"
 #include "psiskv_server.h"
+#include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -21,7 +22,8 @@
 #define SOCK_PATH "./ipc_sock"
 #define JESUS_POWER 1
 #define FS_PATH "./front_server.out"
-
+#define BACKUP_PATH "backup.data"
+#define LOG_PATH "log.data"
 /*
 Server to handle acess to the Key Value store. Also  serves plenty of clients at a time.
 
@@ -46,7 +48,8 @@ struct arguments *args;
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
     printf("Cleaning UP... \n");
-    delete_hash(kv_store, destroy_struct);
+    backup_hash(kv_store, (char *) BACKUP_PATH);
+    delete_hash(kv_store);
     free(args);
     TCPclose(server);
     exit(exit_val);
@@ -183,8 +186,52 @@ int main(int argc, char const *argv[]) {
         port = atoi(argv[1]);
     }
 
-    /*Create Hash Table*/
-    kv_store =  create_hash(STORESIZE);
+    FILE * aux = fopen(BACKUP_PATH, "r");
+    /*Check if Backup exists and Create Hash Table */
+    if(aux==NULL){
+        printf("No Backup found... Starting from scratch\n");
+        aux = fopen(LOG_PATH, "r");
+        if(aux==NULL){
+            printf("No Log found...\n");
+            kv_store =  create_hash(STORESIZE, (char *) LOG_PATH, create_struct, destroy_struct, struct_to_str, struct_get_size);
+        }else{
+            fclose(aux);
+            printf("Log found\n");
+            char temp_log[1024];
+            strcpy(temp_log, LOG_PATH);
+            strcat(temp_log, ".temp");
+            kv_store = create_hash(STORESIZE, temp_log, create_struct, destroy_struct, struct_to_str, struct_get_size);
+            /*process old log and rename temp*/
+            if(process_hash_log(kv_store, (char *) LOG_PATH)<0){
+                printf("Error reading Log... Ignoring\n");
+            }
+            rename_log(kv_store->log, (char *) LOG_PATH);
+        }
+    }else{
+        fclose(aux);
+        /*backup exists, check if log exists*/
+        aux = fopen(LOG_PATH, "r");
+        if(aux==NULL){
+            printf("Backup found and no Log found...\n");
+            /*Log doesn't exist*/
+            kv_store = create_hash_from_backup(STORESIZE, (char *) BACKUP_PATH, (char *) LOG_PATH, create_struct, destroy_struct, struct_to_str, struct_get_size);
+        }else{
+            fclose(aux);
+            printf("Backup and Log found...\n");
+            char temp_log[1024];
+            strcpy(temp_log, LOG_PATH);
+            strcat(temp_log, ".temp");
+            kv_store = create_hash_from_backup(STORESIZE, (char *) BACKUP_PATH, temp_log, create_struct, destroy_struct, struct_to_str, struct_get_size);
+            /*process old log and rename temp*/
+            if(process_hash_log(kv_store, (char *) LOG_PATH)<0){
+                printf("Error reading Log... Ignoring\n");
+            }
+            rename_log(kv_store->log, (char *) LOG_PATH);
+        }
+    }
+    if( kv_store == NULL){
+        exit(-1);
+    }
 
     /*Create arguments structure*/
     args = (struct arguments *) malloc(sizeof(struct arguments));
