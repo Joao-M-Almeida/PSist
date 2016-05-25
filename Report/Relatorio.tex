@@ -169,7 +169,15 @@ The threads are created following the \textbf{on demand} strategy.
 \section{Backup and Log}
 \label{sec:BackupLog}
 
-To guarantee data consistency a backup and a log file are used.
+To guarantee data consistency a backup and a log file are used. The backup stores a snapshot of the state of the Hash table, while the log stores all write and delete commands made since startup.
+
+At startup the data server initializes the hash table according to the flowchart on Figure~\ref{fig:BackupLogFlow}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{./Pictures/BackupLogFlow.png}
+\caption{Data server hash table initialization flow}\label{fig:BackupLogFlow}
+\end{figure}
 
 \section{Fault Tolerance}
 \label{sec:FaultTolerance}
