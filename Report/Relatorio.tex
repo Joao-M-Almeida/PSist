@@ -124,6 +124,7 @@ The communication flow is exemplified on figure~\ref{fig:Comms}. During the \tex
 \includegraphics[width=0.6\textwidth]{./Pictures/CommunicationFlow.png}
 \caption{Overview of the client KV store communication flow}\label{fig:Comms}
 \end{figure}
+
 \section{Key Value Data Structure}
 
 The \textbf{data storage} is implemented on an \textbf{hash table} where each bucket of the hash table is a \textbf{linked list} and each list entry holds the key and a pointer to the value. See Figure~\ref{fig:DataOverview} for more details.
@@ -135,6 +136,31 @@ The \textbf{data storage} is implemented on an \textbf{hash table} where each bu
 \end{figure}
 
 The hash table component is implemented with \textbf{data abstraction} in mind, in this system it holds a byte array and its size, but could be used to store any kind of data. The value implementation belongs to other component, in the key-value store case to the \emph{psiskv\_server.h}.
+
+\subsection{Backup and Log}
+\label{sub:BackupLog}
+
+To maintain data between data server executions a backup and a log file are used. The backup stores a snapshot of the state of the Hash table, while the log stores all write and delete commands made since startup.
+
+At startup the data server initializes the hash table according to the flowchart on figure~\ref{fig:BackupLogFlow}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{./Pictures/BackupLogFlow.png}
+\caption{Data server hash table initialization flow}\label{fig:BackupLogFlow}
+\end{figure}
+
+At a clean exit the data server creates a new backup and deletes the log file. Which means that there only exists a log file if the data server didn't exit orderly.
+
+To prevent data consistency problems the backup file is only deleted after a new backup file is ready.
+
+
+
+\subsection{Synchronization}
+\label{sub:Synchronization}
+
+To guarantee data consistency on the hash table and on the log file a set of measures
+
 
 \section{KV Message Formats}
 
@@ -151,6 +177,7 @@ The structure of the messages exchanged between the \textbf{client} and the \tex
 \end{description}
 After a \emph{WRITE\_REQ} or a \emph{READ\_RESP} a buffer containing the value to store is transmitted over TCP with the length being specified on the previous message.
 
+
 \subsection{Error Messages}
 \label{sub:ErrorMessages}
 
@@ -165,19 +192,6 @@ The threads are created following the \textbf{on demand} strategy.
 
 \section{Front Server}
 \label{sec:FrontServer}
-
-\section{Backup and Log}
-\label{sec:BackupLog}
-
-To guarantee data consistency a backup and a log file are used. The backup stores a snapshot of the state of the Hash table, while the log stores all write and delete commands made since startup.
-
-At startup the data server initializes the hash table according to the flowchart on Figure~\ref{fig:BackupLogFlow}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{./Pictures/BackupLogFlow.png}
-\caption{Data server hash table initialization flow}\label{fig:BackupLogFlow}
-\end{figure}
 
 \section{Fault Tolerance}
 \label{sec:FaultTolerance}
