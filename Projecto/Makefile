@@ -1,9 +1,9 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -pedantic -ansi -std=gnu99 -g
 DEPS = log.h debug.h item.h phash-lib.h inetutils.h TCPlib.h psiskv.h psiskv_server.h
 CLIENT_OBJ = client.o debug.o inetutils.o TCPlib.o psiskv_lib.o
-FRONT_SERVER_OBJ = front-server.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o
-DATA_SERVER_OBJ = data-server.o log.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o
+FRONT_SERVER_OBJ = front-server.o debug.o log.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o
+DATA_SERVER_OBJ = data-server.o debug.o log.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o
 CLI1 = cli-exe-1.o psiskv_lib.o  inetutils.o TCPlib.o
 CLI1PAR = cli-exe-par-1.o psiskv_lib.o inetutils.o TCPlib.o
 EDITOR = gedit
