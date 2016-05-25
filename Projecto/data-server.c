@@ -5,6 +5,7 @@
 #include "psiskv.h"
 #include "psiskv_server.h"
 #include "log.h"
+#include "debug.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -64,8 +65,9 @@ void wakeup_front_server(){
     char *args[] = { (char *) FS_PATH,
                     NULL};
     int id = fork();
-    if(id!=0){
-        printf("(DATA) Resing front server %d\n", id);
+    if(id==0){
+        /*child becomes ressurected server*/
+        printf("(DATA) Launching Front server %d\n", id);
         execv(FS_PATH, args);
         _Exit(-1);
     }
@@ -85,6 +87,10 @@ void front_server_puller(){
     strcpy(remote.sun_path, SOCK_PATH);
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
+    #ifdef DEBUG
+        printf("(Data %d) started DS Puller, attempting to be a client\n", getpid());
+    #endif
+
     if (connect(remote_fd, (struct sockaddr *)&remote, len) != -1) {
         connected = 1;
         printf("data connected to front\n");
@@ -96,7 +102,9 @@ void front_server_puller(){
             sleep(1);
         }
     }
-    printf("But you promissed ):\n");
+    #ifdef DEBUG
+        printf("(Data %d) DS connection failed\n", getpid());
+    #endif
     close(remote_fd);
 
     local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -116,7 +124,9 @@ void front_server_puller(){
     }
 
     wakeup_front_server();
-
+    #ifdef DEBUG
+        printf("(Data %d) attempting to be server\n", getpid());
+    #endif
     while(1){
         t = sizeof(remote);
         remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
@@ -260,7 +270,7 @@ int main(int argc, char const *argv[]) {
     }
 
     int incoming;
-    printf("Server Waiting for connections @ 127.0.0.1:%d\n", port);
+    printf("Data Server (%d) Waiting for connections @ 127.0.0.1:%d\n", getpid(), port);
     while (1) {
         printf("Waiting\n");
 

@@ -1,6 +1,7 @@
 #include "TCPlib.h"
 #include "inetutils.h"
 #include "item.h"
+#include "debug.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +19,8 @@
 #define MAXCLIENTS 5
 #define SOCK_PATH "./ipc_sock"
 #define JESUS_POWER 1
+#define DS_PATH "./data_server.out"
+
 
 /*extern int errno;*/
 
@@ -54,12 +57,13 @@ void exit_gracefuly(int signum){
 }
 
 void wakeup_data_server(){
-    char *args[] = {(char  *) "./data_server.out",
+    char *args[] = {(char  *) DS_PATH,
                     NULL};
     int id = fork();
-    if(id!=0){
-        printf("(FRONT) Resing data server %d\n", id);
-        if(execv("./data_server.out", args) == -1)
+    if(id==0){
+        /*child becomes ressurected server*/
+        printf("(FRONT) launching data server %d\n", id);
+        if(execv(DS_PATH, args) == -1)
             printf("Error: %d\n", errno);
         _Exit(-1);
     }
@@ -79,10 +83,13 @@ void data_server_puller(){
     strcpy(remote.sun_path, SOCK_PATH);
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
+    #ifdef DEBUG
+        printf("(Front %d) started DS Puller, attempting to be a client\n", getpid());
+    #endif
+
     if (connect(remote_fd, (struct sockaddr *)&remote, len) != -1) {
         connected = 1;
         printf("front connected to data\n");
-        printf("Will you marry me?\n");
         while(connected){
           if(TCPsend(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
           if(TCPrecv(remote_fd, (uint8_t*) &token, sizeof(char)) == -1){ connected = 0; }
@@ -91,6 +98,10 @@ void data_server_puller(){
         }
     }
     close(remote_fd);
+
+    #ifdef DEBUG
+        printf("(Front %d) DS connection failed\n", getpid());
+    #endif
 
     local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
@@ -110,6 +121,10 @@ void data_server_puller(){
 
     wakeup_data_server();
 
+
+    #ifdef DEBUG
+        printf("(Front %d) attempting to be server\n", getpid());
+    #endif
     while(1){
         t = sizeof(remote);
         remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
@@ -194,7 +209,7 @@ int main(int argc, char const *argv[]) {
     }
 
     int incoming;
-    printf("Server Waiting for connections @ 127.0.0.1:%d\n", port);
+    printf("Front Server (%d) Waiting for connections @ 127.0.0.1:%d\n", getpid(), port);
     while (!stop) {
         printf("Waiting\n");
         incoming = TCPaccept(server);
