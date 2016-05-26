@@ -25,19 +25,15 @@ client.out: $(CLIENT_OBJ)
 	$(CC) $(CFLAGS) -c $< -o $@ -pthread
 
 c:
+	@rm *.o -f
+	@rm *.gch -f
+	@rm *.out -f
 	clear
-	rm *.o -f
-	rm *.gch -f
-	rm *.out -f
 #	rm *.data -f
 
-C:
-	clear
-	rm *.o -f
-	rm *.gch -f
-	rm *.out -f
-	rm *.data -f
-	rm *.temp -f
+C: c
+	@rm *.data -f
+	@rm *.temp -f
 
 o:
 	$(EDITOR) *.c *.h makefile &

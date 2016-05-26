@@ -14,6 +14,7 @@ When failing to create a socket returns -1;
 When failing to connect returns -2.
 Sets errno in both cases.
 */
+
 int TCPconnect(unsigned long IP, unsigned short port)
 {
     int fd;
@@ -90,6 +91,22 @@ int TCPrecv(int fd, uint8_t *str, unsigned int len)
         return -2;    /* connection closed by peer */
 
     return nread;
+}
+
+int TCPnrecv(int fd, uint8_t *str, unsigned int len){
+    uint8_t *ptr = str;
+    int recv, n = len;
+    while(n > 0){
+        recv = TCPrecv(fd, ptr, n);
+        if(recv==-1){
+            return -1;
+        }else if(recv == -2){
+            return -2;
+        }
+        n -= recv;
+        ptr += recv;
+    }
+    return 0;
 }
 
 /*

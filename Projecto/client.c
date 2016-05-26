@@ -70,12 +70,19 @@ int main(int argc, char const *argv[]) {
 
                 printf("Sending:\n\tKey:%d\n\tValue:%s\n",key,value);
 
-                result = kv_write(connection, key, value, strlen(value)+1,0);
+                result = kv_write(connection, key, value, strlen(value)+1, 0);
                 if (result == -1){
                     perror("KVWrite");
                     clean_up(-1);
                 } else if(result == -2){
                     printf("Value with key %d already exists\n", key);
+                    printf("Want to overwrite?\n");
+                    fgets(buf, BUF_LEN, stdin);
+                    if(!strcmp(buf, "y\n") || !strcmp(buf, "Y\n") || !strcmp(buf, "Yes\n") || !strcmp(buf, "yes\n")){
+                        result = kv_write(connection, key, value, strlen(value)+1, 1);
+                    }else{
+                        printf("OK then\n\n");
+                    }
                 } else {
                     printf("Inserted value: %s \n", value);
                 }

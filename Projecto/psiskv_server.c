@@ -11,9 +11,9 @@ int process_psiskv_prequest(int kv_descriptor, hash_table * store){
 
     kv_msg key_value;
     uint8_t * to_recv = (uint8_t *) &key_value;
-    int result = TCPrecv(kv_descriptor, to_recv, sizeof(kv_msg));
+    int result = TCPnrecv(kv_descriptor, to_recv, sizeof(kv_msg));
     if( result < 0 ){
-        return result;
+        return -1;
     }
 
     #ifdef DEBUG
@@ -56,7 +56,6 @@ int process_psiskv_prequest(int kv_descriptor, hash_table * store){
             break;
         default:
             return -1;
-
         }
 
     return 0;
@@ -84,7 +83,6 @@ Item copy_struct( void * to_copy ){
     return vs;
 }
 
-
 void destroy_struct(void * void_to_destroy) {
     /*TODO: not sure if this is the correct way*/
     value_struct * to_destroy = (value_struct * ) void_to_destroy;
@@ -105,7 +103,6 @@ uint32_t struct_get_size(void * strct_size){
     return strct->size;
 }
 
-
 /*Str is \0 terminated so remove it*/
 void * create_struct_from_str( char * str){
     value_struct * vs;
@@ -122,14 +119,13 @@ void * create_struct_from_str( char * str){
     return vs;
 }
 
-
 int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int value_len, int overwrite){
     int err;
     /*Now read value_len bytes from the socket*/
     uint8_t * item = (uint8_t *) malloc(value_len * sizeof(uint8_t));
 
     /*Receive the value from the socket*/
-    if(TCPrecv(kv_descriptor, item, value_len)==-1){
+    if(TCPnrecv(kv_descriptor, item, value_len)==-1){
         return -1;
     }
     #ifdef DEBUG
@@ -159,8 +155,6 @@ int write_preq(hash_table * store, int kv_descriptor, uint32_t key, unsigned int
         #endif
         destroy_struct(to_store);
     }
-
-
 
     /*Send the response*/
     if(TCPsend(kv_descriptor, (uint8_t *) &message, sizeof(message))==-1){

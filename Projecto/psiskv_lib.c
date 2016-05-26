@@ -44,7 +44,7 @@ int kv_connect(char * kv_server_ip, int kv_server_port){
     int data_server_port;
     int server_fd = TCPconnect(atoh(kv_server_ip), (unsigned short) kv_server_port);
 
-    if(TCPrecv(server_fd, (uint8_t*) buffer, 128*sizeof(char)) == -1){
+    if(TCPnrecv(server_fd, (uint8_t*) buffer, 128*sizeof(char)) == -1){
         return -1;
     }
 
@@ -76,6 +76,7 @@ void kv_close(int kv_descriptor){
     Sends a Write_Request to server and waits for Write_Response.
 */
 int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, int overwrite){
+    int recv;
 
     kv_msg key_value;
     key_value.key = key;
@@ -86,7 +87,6 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
     key_value.value_len = value_length;
 
     uint8_t * to_send = (uint8_t *) &key_value;
-
 
     #ifdef DEBUG
         printf("Writing key:%d\nValue_len:%d\n",key, value_length);
@@ -110,8 +110,11 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
         Receive Write Response;
     */
     uint8_t * to_recv = (uint8_t *) &key_value;
-    if(TCPrecv(kv_descriptor, to_recv, sizeof(kv_msg))==-1){
+    recv = TCPnrecv(kv_descriptor, to_recv, sizeof(kv_msg));
+    if(recv==-1){
         return -1;
+    } else if(recv==-1){
+        return -2;
     }
 
     #ifdef DEBUG
@@ -129,13 +132,14 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
 }
 
 /*
-TODO: Take precautions for disconnected connections during the TCPrecv and TCPwrite
+TODO: Take precautions for disconnected connections during the TCPnrecv and TCPwrite
 */
 
 /*
     Sends a Read_request to server and waits for response key_read_server.
 */
 int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
+    int recv;
 
     kv_msg key_value;
     key_value.key = key;
@@ -155,7 +159,8 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
         Read the Read Response;
     */
     uint8_t * to_recv = (uint8_t *) &key_value;
-    if(TCPrecv(kv_descriptor, to_recv, sizeof(kv_msg))==-1){
+    recv = TCPnrecv(kv_descriptor, to_recv, sizeof(kv_msg));
+    if(recv==-1||recv == -2){
         return -1;
     }
 
@@ -164,8 +169,10 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
             msg_type_to_str(key_value.type), key_value.key, key_value.value_len);
     #endif
 
-    if(key_value.type != READ_RESP){
+    if(key_value.type == ERROR){
         return -2;
+    } else if(key_value.type != READ_RESP){
+        return -1;
     }
 
     /*
@@ -173,7 +180,8 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
     */
     to_recv = (uint8_t * ) malloc(key_value.value_len * sizeof(uint8_t));
 
-    if(TCPrecv(kv_descriptor, to_recv, key_value.value_len)==-1){
+    if(TCPnrecv(kv_descriptor, to_recv, key_value.value_len)==-1){
+        free(to_recv);
         return -1;
     }
     #ifdef DEBUG
@@ -198,6 +206,8 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
     Sends a DELETE_REQ to server and waits for response DELETE_RESP.
 */
 int kv_delete(int kv_descriptor, uint32_t key){
+    int recv;
+
     kv_msg key_value;
     key_value.key = key;
     key_value.type = DELETE_REQ;
@@ -216,7 +226,8 @@ int kv_delete(int kv_descriptor, uint32_t key){
         Read the Delete Response;
     */
     uint8_t * to_recv = (uint8_t *) &key_value;
-    if(TCPrecv(kv_descriptor, to_recv, sizeof(kv_msg))==-1){
+    recv = TCPnrecv(kv_descriptor, to_recv, sizeof(kv_msg));
+    if(recv==-1 || recv==-2){
         return -1;
     }
 
@@ -232,7 +243,7 @@ int kv_delete(int kv_descriptor, uint32_t key){
     if(key_value.value_len == 0){
         /*No item with that key*/
         /*TODO: Ask which value should return on this situation*/
-        return 1;
+        return -1;
     }
 
     return 0;
