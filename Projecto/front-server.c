@@ -15,7 +15,8 @@ int main(int argc, char const *argv[]) {
     /*Threads*/
     pthread_t call_tid, connection_tid, command_tid;
 
-    /*Server can receive port number as argument*/
+    /*Server can receive port number as argument
+    TODO: Remove this, front server is always on 9999*/
     if(argc>1) port = atoi(argv[1]);
 
     #ifdef DEBUG

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -pedantic -ansi -std=gnu99 -g
-DEPS = log.h debug.h item.h phash-lib.h inetutils.h TCPlib.h psiskv.h psiskv_server.h front-lib.h data-lib.h front-lib.h data-lib.h
+DEPS = log.h debug.h item.h phash-lib.h inetutils.h TCPlib.h psiskv.h psiskv_server.h front-lib.h data-lib.h
 CLIENT_OBJ = client.o debug.o inetutils.o TCPlib.o psiskv_lib.o
 FRONT_SERVER_OBJ = debug.o log.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o front-lib.o front-server.o
 DATA_SERVER_OBJ = debug.o log.o phash-lib.o inetutils.o TCPlib.o psiskv_lib.o psiskv_server.o data-lib.o data-server.o
@@ -29,7 +29,7 @@ data_server.out: $(DATA_SERVER_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -pthread
 
 run_client: client.out
-	@echo Running Client Server
+	@echo Running Client
 	@./client.out
 
 client.out: $(CLIENT_OBJ)

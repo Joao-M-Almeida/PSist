@@ -16,7 +16,7 @@ Serves plenty of clients at a time.
 int port;
 int server;
 int connected;
-int interrupt;
+/*int interrupt;*/
 int end, stop, ready, proper;
 int data_server_port;
 struct arguments *args;
@@ -75,13 +75,14 @@ int setup_server( int port ){
 /*
     Fica à espera que alguem lhe diga para parar o servidor
     usage: exit, Exit, e, E
+    TODO: should be only 'quit'
 */
 void * command_handler(void *args){
     char buf[BUF_LEN];
     while(!end){
         fgets(buf, BUF_LEN, stdin);
         if(!strcmp(buf, "e\n") || !strcmp(buf, "E\n") || !strcmp(buf, "Exit\n") || !strcmp(buf, "exit\n")){
-            interrupt = 1;
+            /*interrupt = 1;*/
             stop = 1;
             end = 1;
         }
@@ -109,7 +110,7 @@ void * connection_worker(void *args){
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
 
     #ifdef DEBUG
-        printf("(Front %d) started DS Puller, attempting to be a client\n", getpid());
+        printf("(Front %d) started connection worker, attempting to be a client\n", getpid());
     #endif
 
     if (connect(remote_fd, (struct sockaddr *)&remote, len) != -1) {
@@ -118,12 +119,16 @@ void * connection_worker(void *args){
         while(connected || (end && !proper)){
             if(end==1){
                 strcpy(send_tok, "EXIT\n");
-            } else {
+            }else{
                 strcpy(send_tok, "PING\n");
             }
-            if(TCPsend(remote_fd, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
+            if(TCPsend(remote_fd, (uint8_t*) send_tok, strlen(send_tok)) == -1){
+                connected = 0;
+            }
             if(connected==1){
-                if(TCPrecv(remote_fd, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
+                if(TCPrecv(remote_fd, (uint8_t*) recv_tok, 8) == -1){
+                    connected = 0;
+                }
                 if(connected==1){
                     if(end==1){
                         if(!strcmp(recv_tok,"OK\n")){

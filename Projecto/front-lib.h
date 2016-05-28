@@ -29,7 +29,7 @@ struct arguments {
 extern int port;
 extern int server;
 extern int connected;
-extern int interrupt;
+/*extern int interrupt;*/
 extern int end, stop, ready, proper;
 extern int data_server_port;
 extern struct arguments *args;
@@ -45,5 +45,6 @@ void * command_handler(void *args);
 void * connection_worker(void *args);
 void * answer_call(void *args);
 
-/* SIG Handlers */
+/* SIG Handlers
+On INT exits gracefuly */
 void set_int_handler();
