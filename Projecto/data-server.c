@@ -16,7 +16,7 @@ int main(int argc, char const *argv[]) {
     /*Threads*/
     pthread_t call_id, connection_tid;
 
-    set_int_handler();
+    /*set_int_handler();*/
 
     /*Server can receive port number as argument*/
     if(argc>1) port = atoi(argv[1]);
