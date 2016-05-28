@@ -13,7 +13,7 @@ int process_psiskv_prequest(int kv_descriptor, hash_table * store){
     uint8_t * to_recv = (uint8_t *) &key_value;
     int result = TCPnrecv(kv_descriptor, to_recv, sizeof(kv_msg));
     if( result < 0 ){
-        return -1;
+        return result;
     }
 
     #ifdef DEBUG

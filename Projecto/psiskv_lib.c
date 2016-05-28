@@ -254,7 +254,6 @@ int kv_delete(int kv_descriptor, uint32_t key){
 
     if(key_value.value_len == 0){
         /*No item with that key*/
-        /*TODO: Ask which value should return on this situation*/
         return -1;
     }
 
