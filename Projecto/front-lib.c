@@ -1,5 +1,5 @@
 #include "front-lib.h"
-
+#include "debug.h"
 /*
 Server to handle acess to the Data Server.
 Serves plenty of clients at a time.
@@ -21,14 +21,14 @@ struct arguments *args;
 
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
-    printf("Cleaning UP... \n");
+    printf("(Front %d) Cleaning UP... \n", getpid());
     free(args);
     TCPclose(server);
     exit(exit_val);
 }
 
 void exit_gracefuly(int signum){
-    printf("Received signal: %d\n", signum);
+    printf("(Front %d) Received signal: %d\n",getpid(), signum);
     unlink(SOCK_PATH);
     clean_up(0);
 }
@@ -39,7 +39,7 @@ void wakeup_data_server(){
     char *args[] = {(char  *) DS_PATH,
                     NULL};
     int id = fork();
-    if(id!=0){
+    if(id==0){
         if(server != -1) { close(server); }
         if(ipc_server != -1) { close(ipc_server); }
         printf("(FRONT) launching data server %d\n", id);
@@ -52,8 +52,12 @@ void wakeup_data_server(){
 int setup_server( int port ){
     server = TCPcreate(INADDR_ANY, port);
 
-    if (server<0){ return -1; }
-    if(listen(server, MAXCLIENTS)<0){ return -1; }
+    if (server<0){
+        return -1;
+    }
+    if(listen(server, MAXCLIENTS)<0){
+        return -1;
+    }
 
     return server;
 }
@@ -103,15 +107,15 @@ void * connection_worker(void *args){
 
     if (connect(ipc_client, (struct sockaddr *)&remote, len) != -1) {
         connected = 1;
-        printf("front connected to data\n");
+        printf("(Front %d): front connected to data\n", getpid());
         while(connected){
             if(end==1){ strcpy(send_tok, "EXIT\n"); }
             else { strcpy(send_tok, "PING\n"); }
-            printf("(FRONT %d) Sending token: %s\n", getpid(), send_tok);
+            /*printf("(FRONT %d) Sending token: %s\n", getpid(), send_tok);*/
             if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
             if(connected==1){
                 if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
-                printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);
+                /*printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);*/
                 if(connected==1){
                     if(!end){
                         if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
@@ -120,6 +124,11 @@ void * connection_worker(void *args){
                                 if(aux >= 10000 && aux < 11000){ data_server_port = aux; }
                                 else { /* ERRO */ }
                             } else { /* ERRO */ }
+                        }
+                    }else {
+                        /*implementar um counter*/
+                        if(!strcmp(recv_tok,"OK\n")){
+                            break;
                         }
                     }
                 }
@@ -153,7 +162,7 @@ void * connection_worker(void *args){
         while(connected){
             if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
             if(connected==1){
-                printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);
+                /*printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);*/
                 if(!end){
                     if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
                     else {
@@ -166,7 +175,7 @@ void * connection_worker(void *args){
                 if(end==1){ strcpy(send_tok, "EXIT\n"); }
                 else { strcpy(send_tok, "PING\n"); }
 
-                printf("(FRONT %d) Sending token: %s\n", getpid(), send_tok);
+                /*printf("(FRONT %d) Sending token: %s\n", getpid(), send_tok);*/
                 if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
             }
         }
@@ -181,11 +190,15 @@ void * answer_call( void *args ){
 
     sprintf(buffer, "127.0.0.1:%d\n", data_server_port);
 
+    #ifdef DEBUG
+        printf("(FRONT %d) Received connection, answering %s\n", getpid(),buffer);
+    #endif
+
     pthread_detach(pthread_self());
 
     printf("\tSock_fd: %d\n\n\n", sock_fd);
 
-    TCPsend(sock_fd, (uint8_t *) buffer, strlen(buffer)*sizeof(char));
+    TCPsend(sock_fd, (uint8_t *) buffer, (strlen(buffer)+1)*sizeof(char));
 
     close(sock_fd);
 

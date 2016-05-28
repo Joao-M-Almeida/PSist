@@ -5,7 +5,7 @@ extern int server;
 extern int data_server_port;
 extern struct arguments *args;
 
-int main(int argc, char const *argv[]) {
+int main() {
     /* code */
     unsigned short port = FRONT_SERVER_PORT;
     int incoming;
@@ -28,15 +28,21 @@ int main(int argc, char const *argv[]) {
         printf("(FRONT) Calling Worker Threads\n");
     #endif
     /* Worker Threads */
-    pthread_create(&command_tid, NULL, &command_handler, (void *) &args);
-    pthread_create(&connection_tid, NULL, &connection_worker, (void *) &args);
+    pthread_create(&command_tid, NULL, &command_handler, NULL);
+    pthread_create(&connection_tid, NULL, &connection_worker, NULL);
 
     /*Bind all local inet adresses and port*/
     server = setup_server(port);
+    if(server<0){
+        clean_up(-2);
+    }
     printf("Front Server (%d) Waiting for connections @ 127.0.0.1:%d\n", getpid(), port);
 
     while(!end){
         incoming = TCPaccept(server);
+        #ifdef DEBUG
+            printf("(FRONT) Accepted connection\n");
+        #endif
         /* Verifica se houve */
         if(!end){
             if (incoming<0){
