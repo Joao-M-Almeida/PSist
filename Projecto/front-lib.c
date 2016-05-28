@@ -19,7 +19,9 @@ int end;
 int data_server_port;
 struct arguments *args;
 
-/*TODO: Implementar modos para saber o que limpar*/
+/*TODO: Implementar modos para saber o que limpar
+has to wait for all threads
+*/
 void clean_up(int exit_val){
     printf("(Front %d) Cleaning UP... \n", getpid());
     free(args);
@@ -202,6 +204,7 @@ void * connection_worker(void *args){
             }
         }
     }
+    clean_up(0);
     pthread_exit(NULL);
 }
 

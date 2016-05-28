@@ -179,6 +179,7 @@ void * connection_worker( void *args ){
     #ifdef DEBUG
         printf("(Data %d) Ending communications\n", getpid());
     #endif
+    clean_up(0);
     pthread_exit(NULL);
 }
 
