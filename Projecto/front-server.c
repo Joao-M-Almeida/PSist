@@ -3,8 +3,7 @@
 extern int end;
 extern int server;
 extern int data_server_port;
-
-struct arguments *args;
+extern struct arguments *args;
 
 int main(int argc, char const *argv[]) {
     /* code */
@@ -19,6 +18,7 @@ int main(int argc, char const *argv[]) {
 
     /* Inicializar variaveis globais */
     end = 0;
+    server = -1;
     data_server_port = -1;
 
     /*Create arguments structure*/

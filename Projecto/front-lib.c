@@ -1,5 +1,4 @@
 #include "front-lib.h"
-/*extern int errno;*/
 
 /*
 Server to handle acess to the Data Server.
@@ -18,6 +17,7 @@ int server;
 int ipc_server;
 int end;
 int data_server_port;
+struct arguments *args;
 
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
@@ -40,8 +40,8 @@ void wakeup_data_server(){
                     NULL};
     int id = fork();
     if(id!=0){
-        close(server);
-        close(ipc_server);
+        if(server != -1) { close(server); }
+        if(ipc_server != -1) { close(ipc_server); }
         printf("(FRONT) launching data server %d\n", id);
         if(execv(DS_PATH, args) == -1){ /* ERRO */ }
         _Exit(-1);
@@ -51,17 +51,9 @@ void wakeup_data_server(){
 
 int setup_server( int port ){
     server = TCPcreate(INADDR_ANY, port);
-    if (server<0){
-        perror("TCPcreate");
-        clean_up(-1);
-    }
 
-    /*Set socket as passive*/
-    int err = listen(server, MAXCLIENTS);
-    if (err<0){
-        perror("Listen Error: Port occupied?");
-        clean_up(-1);
-    }
+    if (server<0){ return -1; }
+    if(listen(server, MAXCLIENTS)<0){ return -1; }
 
     return server;
 }
@@ -115,13 +107,13 @@ void * connection_worker(void *args){
         while(connected){
             if(end==1){ strcpy(send_tok, "EXIT\n"); }
             else { strcpy(send_tok, "PING\n"); }
+            printf("(FRONT %d) Sending token: %s\n", getpid(), send_tok);
             if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
             if(connected==1){
                 if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
+                printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);
                 if(connected==1){
-                    if(end==1){
-                        if(!strcmp(recv_tok,"OK\n")){ proper = 1; }
-                    } else {
+                    if(!end){
                         if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
                         else {
                             if(sscanf(recv_tok, "%d\n", &aux) == 1){
@@ -155,9 +147,6 @@ void * connection_worker(void *args){
 
         t = sizeof(remote);
         ipc_client = accept(ipc_server, (struct sockaddr *)&remote, (socklen_t*) &t);
-        #ifdef DEBUG
-            printf("Accept: %d\n", ipc_client);
-        #endif
         if(ipc_client != -1){ connected = 1; }
         else { printf("(FRONT %d) Unable to accept\n", getpid()); }
 
@@ -165,10 +154,7 @@ void * connection_worker(void *args){
             if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
             if(connected==1){
                 printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);
-                if(end==1){
-                    if(!strcmp(recv_tok,"OK\n")){ proper = 1; }
-                    else { /* ERRO */ }
-                } else {
+                if(!end){
                     if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
                     else {
                         if(sscanf(recv_tok, "%d\n", &aux) == 1){
