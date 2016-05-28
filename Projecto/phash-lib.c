@@ -502,7 +502,7 @@ int process_hash_log(hash_table * hash, char * log_path){
                         memcpy(ptr2, ptr, val_size);
                         ptr2[val_size]='\0';
                         item_aux = hash->item_create(val_size, (uint8_t *) ptr2);
-                        insert_item(hash, item_aux, key, 0, 0);
+                        insert_item(hash, item_aux, key, 1, 0);
                         #ifdef DEBUG
                             printf("K: %d, V:", key);
                             print_bytes(ptr2,  val_size);
@@ -518,7 +518,7 @@ int process_hash_log(hash_table * hash, char * log_path){
                         read(log_file, ptr3, val_size-(buf+bufsize-ptr));
                         ptr2[val_size]='\0';
                         item_aux =hash->item_create(val_size, (uint8_t *) ptr2);
-                        insert_item(hash, item_aux, key, 0,0);
+                        insert_item(hash, item_aux, key, 1, 0);
                         #ifdef DEBUG
                             printf("K: %d, V:", key);
                             print_bytes(ptr2,  val_size);
