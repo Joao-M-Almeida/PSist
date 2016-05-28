@@ -38,6 +38,7 @@ int log_insert(kv_log * log, uint32_t key, void * to_store, char * (*to_byte_arr
     char * ptr = aux2 + strlen(aux3);
     memcpy(ptr, aux, size);
     fwrite(aux2, sizeof(char), size+strlen(aux3), log->log_fd);
+    fflush(log->log_fd);
     #ifdef DEBUG
         printf("Logging insert K: %u S: %u V: ", key, size);
         char * aux99 = to_byte_array(to_store);
@@ -54,6 +55,7 @@ int log_insert(kv_log * log, uint32_t key, void * to_store, char * (*to_byte_arr
 /* Log should be locked */
 int log_delete(kv_log * log, uint32_t key){
     fprintf(log->log_fd, "D %u", key);
+    fflush(log->log_fd);
     #ifdef DEBUG
         printf("Logging Delete K: %u\n", key);
     #endif
