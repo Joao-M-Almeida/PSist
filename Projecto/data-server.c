@@ -1,9 +1,6 @@
 #include "data-lib.h"
 
-/*retirar*/
-#ifndef DEBUG
-#define DEBUG
-#endif
+#include "debug.h"
 
 extern int end;
 extern int server;
@@ -55,7 +52,10 @@ int main(int argc, char const *argv[]) {
             pthread_create(&call_id, NULL, &answer_call, (void *) &args);
         }
     }
-    pthread_join(connection_tid, NULL);
+    #ifdef DEBUG
+        printf("(DATA %d) Not accepting more clients\n Waiting for connection worker...\n", getpid());
+    #endif
+    /*pthread_join(connection_tid, NULL);*/
 
     clean_up(0);
 

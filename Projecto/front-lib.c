@@ -29,8 +29,9 @@ void clean_up(int exit_val){
 
 void exit_gracefuly(int signum){
     printf("(Front %d) Received signal: %d\n",getpid(), signum);
-    unlink(SOCK_PATH);
-    clean_up(0);
+    /*unlink(SOCK_PATH);
+    clean_up(0);*/
+    end =1;
 }
 
 /* Thread para acordar o data server,
@@ -73,7 +74,7 @@ void * command_handler(void *args){
     char buf[BUF_LEN];
     while(!end){
         fgets(buf, BUF_LEN, stdin);
-        if(!strcmp(buf, "e\n") || !strcmp(buf, "E\n") || !strcmp(buf, "Exit\n") || !strcmp(buf, "exit\n")){
+        if(!strcmp(buf, "quit\n")){
             end = 1;
         }
     }
@@ -120,7 +121,7 @@ void * connection_worker(void *args){
             /*printf("(FRONT %d) Sending token: %s\n", getpid(), send_tok);*/
             if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)+1) == -1){ connected = 0; }
             if(connected==1){
-                if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
+                if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8)<0){ connected = 0; }
                 /*printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);*/
                 if(connected==1){
                     if(!end){
@@ -174,7 +175,7 @@ void * connection_worker(void *args){
         else { printf("(FRONT %d) Unable to accept\n", getpid()); }
 
         while(connected){
-            if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
+            if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) <0){ connected = 0; }
             if(connected==1){
                 /*printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);*/
                 if(!end){

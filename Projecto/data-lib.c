@@ -87,12 +87,14 @@ void * connection_worker( void *args ){
         printf("(Data %d) started FS Puller, attempting to be a client\n", getpid());
     #endif
 
+    /*Try to connect to FS as client*/
     if (connect(ipc_client, (struct sockaddr *)&remote, len) != -1) {
         connected = 1;
-        printf("data connected to front\n");
+        printf("(Data %d) connected to front\n", getpid());
         while(connected){
-            if(end==1){ strcpy(send_tok, "OK\n"); }
-            else {
+            if(end==1){
+                strcpy(send_tok, "OK\n");
+            }else{
                 if(resend==1){
                     while(port==-1);
                     sprintf(send_tok, "%d\n", port);
@@ -102,17 +104,22 @@ void * connection_worker( void *args ){
             /*printf("(DATA %d) Sending a token: %s\n", getpid(), send_tok);*/
             if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)+1) == -1){ connected = 0; }
             if(connected==1){
-                if(end || TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
+                if(end || TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) < 0){ connected = 0; }
                 /*printf("(DATA %d) Received a token: %s\n", getpid(), recv_tok);*/
                 if(connected==1){
                     if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
-                    else if(!strcmp(recv_tok,"EXIT\n")){ end = 1; }
-                    else { /* ERRO */ }
+                    else if(!strcmp(recv_tok,"EXIT\n")){
+                        printf("(DATA %d) Received EXIT\n", getpid());
+                        end = 1;
+                    }else {
+                      /* ERRO */
+                    }
                 }
             }
         }
     }
     close(ipc_client);
+    /*FS not running*/
 
     #ifdef DEBUG
         printf("(Data %d) FS connection failed\n", getpid());
@@ -127,7 +134,9 @@ void * connection_worker( void *args ){
 
     if(bind(ipc_server, (struct sockaddr *)&local, len) == -1){ exit_gracefuly(3); }
     if(listen(ipc_server, 5) == -1){ exit_gracefuly(3); }
-
+    #ifdef DEBUG
+        printf("(Data %d) trying to be server\n", getpid());
+    #endif
     while(!end){
         resend = 1;
         wakeup_front_server();
@@ -139,27 +148,37 @@ void * connection_worker( void *args ){
         } else { printf("(DATA %d) Unable to accept\n", getpid()); }
 
         while(connected){
-            if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
+            if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) <0){ connected = 0; }
             if(connected==1){
                 /*printf("(DATA %d) Received token: %s\n", getpid(), recv_tok);*/
-                if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
-                else if(!strcmp(recv_tok,"EXIT\n")){ end = 1; }
-                else { /* ERRO */ }
+                if(!strcmp(recv_tok,"PING\n")){
+                    sleep(1);
+                }else if(!strcmp(recv_tok,"EXIT\n")){
+                    printf("(DATA %d) Received EXIT\n", getpid());
+                    end = 1;
+                }else{
+                 /* ERRO */
+                }
 
-                if(end==1){ strcpy(send_tok, "OK\n"); }
-                else {
+                if(end==1){
+                    strcpy(send_tok, "OK\n");
+                }else {
                     if(resend == 1){
                         while(port==-1);
                         sprintf(send_tok, "%d\n", port);
                         resend = 0;
-                    } else { strcpy(send_tok, "PING\n"); }
+                    } else {
+                        strcpy(send_tok, "PING\n");
+                    }
                 }
                 /*printf("(DATA %d) Sending a token: %s\n", getpid(), send_tok);*/
                 if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)+1) == -1){ connected = 0; }
             }
         }
     }
-
+    #ifdef DEBUG
+        printf("(Data %d) Ending communications\n", getpid());
+    #endif
     pthread_exit(NULL);
 }
 
@@ -172,7 +191,7 @@ void * answer_call( void *args ){
     pthread_detach(pthread_self());
     printf("\tSock_fd: %d\n\n\n", sock_fd);
 
-    while (1) {
+    while (!end) {
         int err = process_psiskv_prequest(sock_fd,kv_store);
 
         if (err<0){
@@ -238,7 +257,7 @@ void setup_backup() {
         }
     }
     if( kv_store == NULL){
-        //criar erro para isto
+        // TODO criar erro para isto
         clean_up(0);
     }
     return;

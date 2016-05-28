@@ -56,7 +56,9 @@ int main() {
         }
     }
     pthread_join(connection_tid, NULL);
+    pthread_join(command_tid, NULL);
 
+    printf("FS exiting normally\n");
     clean_up(0);
 
     return -1;
