@@ -193,7 +193,7 @@ After a \emph{WRITE\_REQ} or a \emph{READ\_RESP} a buffer containing the value t
 \section{Inter Server Communication}
 \label{sec:CommunicationProtocol}
 To ensure that the processes keep each other alive, the data server knows when to shutdown and the front server knows the Data Server's address, the servers have a communication protocol.
-One thread in each server, called 'communication worker', exchange the following messages:
+One thread in each server, called 'communication worker', exchanges the following messages:
   \begin{description}
     \item[PING] - default message, just to ensure the other process is still alive, 1 per second;
     \item['PORT'] - informs the Front Server about the Data Server's port;
@@ -201,9 +201,12 @@ One thread in each server, called 'communication worker', exchange the following
     \item[OK] - informs the Front Server that the Data Server received the EXIT command;
   \end{description}
 
+The bilateral communication between servers is made using an Unix socket with byte streams. To create this communication channel each server follows a small algorithm. First they try to be the client, attempting to connect to the server. If that fails it means the other server isn't running so they launch it, with a fork and a execv, and start accepting requests on the unix socket.
 
 \section{Front Server}
 \label{sec:FrontServer}
+
+A flowchart of the execution of the Front Server is available on figure \ref{fig:CommunicationsFront}. The communication to the data server and it's fault tolerance are also detailed.
 
 \begin{figure}[H]
 \centering
@@ -213,6 +216,8 @@ One thread in each server, called 'communication worker', exchange the following
 
 \section{Data Server}
 \label{sec:DataServer}
+
+The execution of the Data Server is depicted on the flowchart on figure \ref{fig:CommunicationsData}.
 
 \begin{figure}[H]
 \centering
@@ -227,10 +232,14 @@ The threads are created following the \textbf{on demand} strategy for both the f
 
 On the front server there are three threads always running and others created to handle kv_connect requests. There is one thread reading from stdin to check if the user tells the server to quit, there is the main thread, locked in a accept for the TCP socket that creates new threads for each new request and the communication socket, that exchanges messages with the data server, see section \ref{sec:CommunicationProtocol}.
 
-On the 
+On the data server there are two threads always running and others created on demand to answer client requests. There is the main thread responsible for creating threads to answer the clients and the communication thread.
 
 \section{Fault Tolerance}
 \label{sec:FaultTolerance}
+
+Besides preventing data loss with the use of a backup and a log file, see section \ref{sub:BackupLog}, there are also mechanisms to recover from crashes on one of the the servers. As specified, faults during recovery were ignored.
+
+To detect a fault on one of the servers the communication protocol is used. %TODO
 
 \section{Clients}
 \label{sec:Clients}
