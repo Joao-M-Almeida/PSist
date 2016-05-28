@@ -100,7 +100,7 @@ void * connection_worker( void *args ){
                 } else { strcpy(send_tok, "PING\n"); }
             }
             /*printf("(DATA %d) Sending a token: %s\n", getpid(), send_tok);*/
-            if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
+            if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)+1) == -1){ connected = 0; }
             if(connected==1){
                 if(end || TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
                 /*printf("(DATA %d) Received a token: %s\n", getpid(), recv_tok);*/
@@ -155,7 +155,7 @@ void * connection_worker( void *args ){
                     } else { strcpy(send_tok, "PING\n"); }
                 }
                 /*printf("(DATA %d) Sending a token: %s\n", getpid(), send_tok);*/
-                if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
+                if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)+1) == -1){ connected = 0; }
             }
         }
     }

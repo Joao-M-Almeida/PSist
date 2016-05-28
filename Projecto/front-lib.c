@@ -112,23 +112,34 @@ void * connection_worker(void *args){
         connected = 1;
         printf("(Front %d): front connected to data\n", getpid());
         while(connected){
-            if(end==1){ strcpy(send_tok, "EXIT\n"); }
+            if(end==1){
+                strcpy(send_tok, "EXIT\n");
+                printf("(FRONT %d) Sending end token: %s\n", getpid(), send_tok);
+            }
             else { strcpy(send_tok, "PING\n"); }
             /*printf("(FRONT %d) Sending token: %s\n", getpid(), send_tok);*/
-            if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
+            if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)+1) == -1){ connected = 0; }
             if(connected==1){
                 if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
                 /*printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);*/
                 if(connected==1){
                     if(!end){
-                        if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
-                        else {
+                        if(!strcmp(recv_tok,"PING\n")){
+                            sleep(1);
+                        }else{
+                            printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);
                             if(sscanf(recv_tok, "%d\n", &aux) == 1){
-                                if(aux >= 10000 && aux < 11000){ data_server_port = aux; }
-                                else { /* ERRO */ }
-                            } else { /* ERRO */ }
+                                if(aux >= 10000 && aux < 11000){
+                                    data_server_port = aux;
+                                }else{
+                                 /* TODO ERRO */
+                                }
+                            }else{
+                                /* TODO ERRO */
+                            }
                         }
-                    }else {
+                    }else{
+                        printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);
                         /*implementar um counter*/
                         if(!strcmp(recv_tok,"OK\n")){
                             break;
@@ -167,19 +178,26 @@ void * connection_worker(void *args){
             if(connected==1){
                 /*printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);*/
                 if(!end){
-                    if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
-                    else {
+                    if(!strcmp(recv_tok,"PING\n")){
+                        sleep(1);
+                    }else{
+                        printf("(FRONT %d) Not a PING, Received a token: %s\n", getpid(), recv_tok);
                         if(sscanf(recv_tok, "%d\n", &aux) == 1){
-                            if(aux >= 10000 && aux < 11000){ data_server_port = aux; }
-                            else { /* ERRO */ }
+                            if(aux >= 10000 && aux < 11000){
+                                data_server_port = aux;
+                            }else { /* ERRO */ }
                         } else { /* ERRO */ }
                     }
                 }
-                if(end==1){ strcpy(send_tok, "EXIT\n"); }
+                if(end==1){
+                    printf("(FRONT %d) END and received a token: %s\n", getpid(), recv_tok);
+                    strcpy(send_tok, "EXIT\n");
+                    printf("(FRONT %d) sending: %s\n", getpid(),send_tok);
+                }
                 else { strcpy(send_tok, "PING\n"); }
 
                 /*printf("(FRONT %d) Sending token: %s\n", getpid(), send_tok);*/
-                if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
+                if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)+1) == -1){ connected = 0; }
             }
         }
     }
