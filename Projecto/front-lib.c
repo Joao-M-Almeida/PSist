@@ -68,6 +68,8 @@ int setup_server( int port ){
     TODO: should be only 'quit'
 */
 void * command_handler(void *args){
+    if (args == NULL){}
+
     char buf[BUF_LEN];
     while(!end){
         fgets(buf, BUF_LEN, stdin);
@@ -84,6 +86,7 @@ void * command_handler(void *args){
     e envia sinal para desligar, quando pedido.
 */
 void * connection_worker(void *args){
+    if (args == NULL){}
 
     int ipc_client;
     struct sockaddr_un local, remote;

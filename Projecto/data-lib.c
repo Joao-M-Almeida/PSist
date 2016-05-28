@@ -39,7 +39,7 @@ void wakeup_front_server(){
     char *args[] = { (char *) FS_PATH,
                     NULL};
     int id = fork();
-    if(id!=0){
+    if(id==0){
         if(server != -1) { close(server); }
         if(ipc_server != -1) { close(ipc_server); }
         printf("(DATA) Launching Front server %d\n", id);
@@ -56,6 +56,9 @@ int setup_server(){
         port++;
         server = TCPcreate(INADDR_ANY, port);
     } while(server<0 && port < 11000);
+    if(port==11000){
+        clean_up(-1);
+    }
 
     if (server < 0 || listen(server, MAXCLIENTS) < 0) { clean_up(-1); }
 
@@ -63,6 +66,7 @@ int setup_server(){
 }
 
 void * connection_worker( void *args ){
+    if(args==NULL){}
 
     int ipc_client;
     struct sockaddr_un local, remote;
@@ -95,11 +99,11 @@ void * connection_worker( void *args ){
                     resend = 0;
                 } else { strcpy(send_tok, "PING\n"); }
             }
-            printf("(DATA %d) Sending a token: %s\n", getpid(), send_tok);
+            /*printf("(DATA %d) Sending a token: %s\n", getpid(), send_tok);*/
             if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
             if(connected==1){
                 if(end || TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
-                printf("(DATA %d) Received a token: %s\n", getpid(), recv_tok);
+                /*printf("(DATA %d) Received a token: %s\n", getpid(), recv_tok);*/
                 if(connected==1){
                     if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
                     else if(!strcmp(recv_tok,"EXIT\n")){ end = 1; }
@@ -137,7 +141,7 @@ void * connection_worker( void *args ){
         while(connected){
             if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
             if(connected==1){
-                printf("(DATA %d) Received token: %s\n", getpid(), recv_tok);
+                /*printf("(DATA %d) Received token: %s\n", getpid(), recv_tok);*/
                 if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
                 else if(!strcmp(recv_tok,"EXIT\n")){ end = 1; }
                 else { /* ERRO */ }
@@ -150,7 +154,7 @@ void * connection_worker( void *args ){
                         resend = 0;
                     } else { strcpy(send_tok, "PING\n"); }
                 }
-                printf("(DATA %d) Sending a token: %s\n", getpid(), send_tok);
+                /*printf("(DATA %d) Sending a token: %s\n", getpid(), send_tok);*/
                 if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
             }
         }

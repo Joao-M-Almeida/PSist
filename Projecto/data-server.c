@@ -35,10 +35,13 @@ int main(int argc, char const *argv[]) {
         printf("(DATA) Calling Worker Thread\n");
     #endif
     /* Worker Thread */
-    pthread_create(&connection_tid, NULL, &connection_worker, (void *) &args);
+    pthread_create(&connection_tid, NULL, &connection_worker, NULL);
 
     /*Bind all local inet adresses and port*/
     server = setup_server();
+    if(server<0){
+        clean_up(-1);
+    }
     printf("Data Server (%d) Waiting for connections @ 127.0.0.1:%d\n", getpid(), port);
 
     while(!end){

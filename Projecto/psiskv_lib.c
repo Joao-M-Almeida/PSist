@@ -163,7 +163,7 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
     /*
         Send the Read Request;
     */
-    if (TCPsend(kv_descriptor, to_send, sizeof(to_send))==-1){
+    if (TCPsend(kv_descriptor, to_send, sizeof(kv_msg))==-1){
         return -1;
     }
 
@@ -230,7 +230,7 @@ int kv_delete(int kv_descriptor, uint32_t key){
     /*
         Send the Delete Request;
     */
-    if (TCPsend(kv_descriptor, to_send, sizeof(to_send))==-1){
+    if (TCPsend(kv_descriptor, to_send, sizeof(kv_msg))==-1){
         return -1;
     }
 
