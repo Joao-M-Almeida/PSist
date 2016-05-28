@@ -181,17 +181,40 @@ After a \emph{WRITE\_REQ} or a \emph{READ\_RESP} a buffer containing the value t
 \subsection{Error Messages}
 \label{sub:ErrorMessages}
 
+\section{Communication Protocol}
+\label{sec:CommunicationProtocol}
+To ensure that the processes keep each other alive, the data server knows when to shutdown, and the front server knows the Data Server's address, 
+the communication workers exchange the following messages:
+  \begin{description}
+    \item[PING] - default message, just to ensure the other process is still alive;
+    \item[\{PORT\}] - informs the Front Server about the Data Server's port;
+    \item[EXIT] - commands the Data Server to shut down;
+    \item[OK] - informs the Front Server that the Data Server received the EXIT command;
+  \end{description}
+
+
+\section{Front Server}
+\label{sec:FrontServer}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{./Pictures/Communications-Front.png}
+\caption{All communications with Front Server}\label{fig:CommunicationsFront}
+\end{figure}
 
 \section{Data Server}
 \label{sec:DataServer}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{./Pictures/Communications-Data.png}
+\caption{All communications with Data Server}\label{fig:CommunicationsData}
+\end{figure}
 
 \subsection{Thread Management}
 \label{sub:ThreadManagement}
 
 The threads are created following the \textbf{on demand} strategy.
-
-\section{Front Server}
-\label{sec:FrontServer}
 
 \section{Fault Tolerance}
 \label{sec:FaultTolerance}
