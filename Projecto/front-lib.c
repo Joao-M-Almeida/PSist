@@ -15,11 +15,9 @@ Serves plenty of clients at a time.
 
 int port;
 int server;
-int connected;
-/*int interrupt;*/
-int end, stop, ready, proper;
+int ipc_server;
+int end;
 int data_server_port;
-struct arguments *args;
 
 /*TODO: Implementar modos para saber o que limpar*/
 void clean_up(int exit_val){
@@ -40,17 +38,13 @@ mete o ready a 0 para não fazer binds antes do fork */
 void wakeup_data_server(){
     char *args[] = {(char  *) DS_PATH,
                     NULL};
-    if(ready==2 && connected==0){
-        int id = fork();
-        if(id!=0){
-            /*child becomes ressurected server*/
-            printf("(FRONT) launching data server %d\n", id);
-            if(execv(DS_PATH, args) == -1)
-                printf("Error: %d\n", errno);
-            _Exit(-1);
-        } else {
-            ready = 0;
-        }
+    int id = fork();
+    if(id!=0){
+        close(server);
+        close(ipc_server);
+        printf("(FRONT) launching data server %d\n", id);
+        if(execv(DS_PATH, args) == -1){ /* ERRO */ }
+        _Exit(-1);
     }
     return;
 }
@@ -82,8 +76,6 @@ void * command_handler(void *args){
     while(!end){
         fgets(buf, BUF_LEN, stdin);
         if(!strcmp(buf, "e\n") || !strcmp(buf, "E\n") || !strcmp(buf, "Exit\n") || !strcmp(buf, "exit\n")){
-            /*interrupt = 1;*/
-            stop = 1;
             end = 1;
         }
     }
@@ -97,13 +89,17 @@ void * command_handler(void *args){
 */
 void * connection_worker(void *args){
 
-    int local_fd, remote_fd;
+    int ipc_client;
     struct sockaddr_un local, remote;
     char send_tok[8], recv_tok[8];
     int len, t;
+    int connected;
     int aux;
 
-    remote_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    ipc_client = socket(AF_UNIX, SOCK_STREAM, 0);
+
+    connected = 0;
+    ipc_server = -1;
 
     remote.sun_family = AF_UNIX;
     strcpy(remote.sun_path, SOCK_PATH);
@@ -113,162 +109,83 @@ void * connection_worker(void *args){
         printf("(Front %d) started connection worker, attempting to be a client\n", getpid());
     #endif
 
-    if (connect(remote_fd, (struct sockaddr *)&remote, len) != -1) {
+    if (connect(ipc_client, (struct sockaddr *)&remote, len) != -1) {
         connected = 1;
         printf("front connected to data\n");
-        while(connected || (end && !proper)){
-            if(end==1){
-                strcpy(send_tok, "EXIT\n");
-            }else{
-                strcpy(send_tok, "PING\n");
-            }
-            if(TCPsend(remote_fd, (uint8_t*) send_tok, strlen(send_tok)) == -1){
-                connected = 0;
-            }
+        while(connected){
+            if(end==1){ strcpy(send_tok, "EXIT\n"); }
+            else { strcpy(send_tok, "PING\n"); }
+            if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
             if(connected==1){
-                if(TCPrecv(remote_fd, (uint8_t*) recv_tok, 8) == -1){
-                    connected = 0;
-                }
+                if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
                 if(connected==1){
                     if(end==1){
-                        if(!strcmp(recv_tok,"OK\n")){
-                            proper = 1;
-                        }
+                        if(!strcmp(recv_tok,"OK\n")){ proper = 1; }
                     } else {
-                        if(!strcmp(recv_tok,"PING\n")){
-                            sleep(1);
-                        } else {
-                            if(ready==0){
-                                if(sscanf(recv_tok, "%d\n", &aux) != 1){
-                                    ready = -1;
-                                    close(remote_fd);
-                                    return(NULL);
-                                }
-                                if(aux >= 10000 && aux < 11000){
-                                    printf("Recv port: %d\n", aux);
-                                    data_server_port = aux;
-                                    ready = 1;
-                                } else {
-                                    ready = -1;
-                                    close(remote_fd);
-                                    return(NULL);
-                                }
-                                break;
-                            } else {
-                                ready = -1;
-                                close(remote_fd);
-                                return(NULL);
-                            }
+                        if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
+                        else {
+                            if(sscanf(recv_tok, "%d\n", &aux) == 1){
+                                if(aux >= 10000 && aux < 11000){ data_server_port = aux; }
+                                else { /* ERRO */ }
+                            } else { /* ERRO */ }
                         }
                     }
-
                 }
             }
         }
     }
-    close(remote_fd);
+    close(ipc_client);
 
     #ifdef DEBUG
         printf("(Front %d) DS connection failed\n", getpid());
     #endif
 
+    ipc_server = socket(AF_UNIX, SOCK_STREAM, 0);
+
+    local.sun_family = AF_UNIX;
+    strcpy(local.sun_path, SOCK_PATH);
+    unlink(local.sun_path);
+    len = strlen(local.sun_path) + sizeof(local.sun_family);
+
+    if(bind(ipc_server, (struct sockaddr *)&local, len) == -1){ exit_gracefuly(3); }
+    if(listen(ipc_server, 5) == -1){ exit_gracefuly(3); }
+
     while(!end){
-        ready = 2;
-        #ifdef DEBUG
-            printf("(Front %d) Wake Up Data\n", getpid());
-        #endif
         wakeup_data_server();
 
-        local_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-
-        local.sun_family = AF_UNIX;
-        strcpy(local.sun_path, SOCK_PATH);
-        unlink(local.sun_path);
-        len = strlen(local.sun_path) + sizeof(local.sun_family);
-
-        /* Para não copiar bind no fork */
-        printf("(FRONT %d) Waiting for fork\n", getpid());
-        while(ready==2);
-        printf("(FRONT %d) Ready to go\n", getpid());
-
-        if(bind(local_fd, (struct sockaddr *)&local, len) == -1){
-            printf("Mega shit (front bind) #%d\n", errno);
-            exit_gracefuly(3);
-        }
-
-        if(listen(local_fd, 5) == -1){
-            printf("Mega shit (front listen) #%d\n", errno);
-            exit_gracefuly(3);
-        }
-
         t = sizeof(remote);
-        printf("(FRONT %d) Waiting for connection\n", getpid());
-        remote_fd = accept(local_fd, (struct sockaddr *)&remote, (socklen_t*) &t);
-        printf("Accept: %d\n", remote_fd);
-        if(remote_fd != -1){
-            connected = 1;
-        } else {
-            printf("(FRONT %d) Unable to accept\n", getpid());
-        }
+        ipc_client = accept(ipc_server, (struct sockaddr *)&remote, (socklen_t*) &t);
+        #ifdef DEBUG
+            printf("Accept: %d\n", ipc_client);
+        #endif
+        if(ipc_client != -1){ connected = 1; }
+        else { printf("(FRONT %d) Unable to accept\n", getpid()); }
+
         while(connected){
-            printf("(FRONT %d) Waiting...\n", getpid());
-            if(TCPrecv(remote_fd, (uint8_t*) recv_tok, 8) == -1){
-                connected = 0;
-                printf("(FRONT %d) Connection fell @ Recv\n", getpid());
-            }
-            printf("(FRONT) Ready: %d; End: %d; Stop: %d\n", ready, end, stop);
+            if(TCPrecv(ipc_client, (uint8_t*) recv_tok, 8) == -1){ connected = 0; }
             if(connected==1){
                 printf("(FRONT %d) Received a token: %s\n", getpid(), recv_tok);
                 if(end==1){
-                    if(!strcmp(recv_tok,"OK\n")){
-                        proper = 1;
-                    }
+                    if(!strcmp(recv_tok,"OK\n")){ proper = 1; }
+                    else { /* ERRO */ }
                 } else {
-                    if(!strcmp(recv_tok,"PING\n")){
-                        sleep(1);
-                    } else {
-                        if(ready == 0){
-                            if(sscanf(recv_tok, "%d\n", &aux) != 1){
-                                ready = -1;
-                                close(remote_fd);
-                                return(NULL);
-                            }
-                            if(aux >= 10000 && aux < 11000){
-                                data_server_port = aux;
-                                ready = 1;
-                            } else {
-                                ready = -1;
-                                close(remote_fd);
-                                return(NULL);
-                            }
-                        } else {
-                            ready = -1;
-                            close(remote_fd);
-                            return(NULL);
-                        }
+                    if(!strcmp(recv_tok,"PING\n")){ sleep(1); }
+                    else {
+                        if(sscanf(recv_tok, "%d\n", &aux) == 1){
+                            if(aux >= 10000 && aux < 11000){ data_server_port = aux; }
+                            else { /* ERRO */ }
+                        } else { /* ERRO */ }
                     }
                 }
-                if(end==1){
-                    strcpy(send_tok, "EXIT\n");
-                } else {
-                    strcpy(send_tok, "PING\n");
-                }
-                printf("(FRONT) Ready: %d; End: %d; Stop: %d\n", ready, end, stop);
+                if(end==1){ strcpy(send_tok, "EXIT\n"); }
+                else { strcpy(send_tok, "PING\n"); }
+
                 printf("(FRONT %d) Sending token: %s\n", getpid(), send_tok);
-                if(TCPsend(remote_fd, (uint8_t*) send_tok, strlen(send_tok)) == -1){
-                    connected = 0;
-                    printf("(FRONT %d) Connection fell @ Send\n", getpid());
-                }
+                if(TCPsend(ipc_client, (uint8_t*) send_tok, strlen(send_tok)) == -1){ connected = 0; }
             }
         }
-        printf("Why am I here?\n");
-        close(local_fd);
-        stop = 1;
-        close(server);
-        server = -1;
     }
-
-    return(NULL);
+    pthread_exit(NULL);
 }
 
 void * answer_call( void *args ){
