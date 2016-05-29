@@ -15,8 +15,6 @@ typedef uint32_t (*get_size) (Item);
 typedef struct _hash_item {
     struct _hash_item *next;
     uint32_t key;
-    /*Lock controls acesses to the Item only*/
-    pthread_rwlock_t lock;
     Item item;
 } hash_item;
 

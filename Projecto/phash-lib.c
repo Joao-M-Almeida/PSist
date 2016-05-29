@@ -46,7 +46,6 @@ hash_item *create_hitem(uint32_t key, Item item){
     hash_item *new_hitem;
     new_hitem = (hash_item*) malloc(sizeof(hash_item));
     new_hitem->key = key;
-    pthread_rwlock_init(&new_hitem->lock, NULL); /*TODO: is this needed*/
     new_hitem->item = item;
     new_hitem->next = NULL;
     return new_hitem;
@@ -56,15 +55,8 @@ hash_item *create_hitem(uint32_t key, Item item){
     Delete the hash_item->item, the mutex and the hash_item
 */
 void delete_hitem(hash_item *item, void (*delete_func) (Item)){
-    /*TODO: do we need to lock on deletion?*/
-    /*pthread_rwlock_wrlock(&item->lock);*/
     delete_func(item->item);
-    /*pthread_rwlock_unlock(&item->lock);*/
-
-    /*TODO: We have to delete the rwlock?*/
-    pthread_rwlock_destroy(&item->lock);
-
-    free(item);
+    free(item); /*TODO this free should be done outside the lock*/
     return;
 }
 

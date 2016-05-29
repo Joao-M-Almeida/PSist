@@ -170,7 +170,19 @@ backup file is only deleted after a new backup file is ready.
 
 As the Data Server is multi-threaded there might be problems with concurrent operations.
 The hash table and the log file are vulnerable to these problems, so a mechanism was implemented to protect them.
-There are three operations on the hash table susceptible to problems, \emph{read_item}, \emph{write_item} and \emph{delete_item}.
+
+There are three operations on the hash table susceptible to problems, \emph{read\_item}, \emph{insert\_item} and \emph{delete\_item}.
+Has the hash table is divided into buckets the problematic situations occur with operations to items in the same bucket.
+And so an array of readers-writer (RM) locks are stored in the hash table and lock access to each of the buckets.
+Each of the buckets stores a linked list of hash\_items, so there are measures that need to be taken when cycling through the list.
+For instance a while any operation searches for an item, no item deletion or insertion can occur on that list. So during the insert and delete operations the RW lock of that bucket is locked for writing and during a read is locked for reading.
+
+The operations that are written to the log are the item insertion and deletion.
+The log has to guarantee that operations to the same item are written in the order on which they are executed.
+
+
+
+
 %TODO synchronization on the hash table, explain for insert, deletes and Reads
 %TODO log sync
 
