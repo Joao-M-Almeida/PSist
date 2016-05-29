@@ -56,7 +56,7 @@ hash_item *create_hitem(uint32_t key, Item item){
 */
 void delete_hitem(hash_item *item, void (*delete_func) (Item)){
     delete_func(item->item);
-    free(item); /*TODO this free should be done outside the lock*/
+    free(item);
     return;
 }
 
@@ -92,7 +92,6 @@ void delete_hash(hash_table * hash){
 
 /*
     Hash function
-    TODO: turn this into a MACRO?
 */
 uint hash_function(uint32_t key, uint32_t size){
     return (uint) (key%size);
@@ -113,7 +112,8 @@ Item read_item(hash_table * hash, uint32_t key){
 
     if(aux_hitem != NULL){
         /* Return copy of item instead of a pointer to it */
-        /*TODO: this is working but is ugly*/
+        /*TODO: is doing an extra copy of the value,
+        should have a specific function to get pointer*/
         item = hash->item_create(hash->item_get_size(aux_hitem->item), (uint8_t *) hash->item_to_byte_array(aux_hitem->item));
         pthread_rwlock_unlock(hash->locks[index]);
         return item;
@@ -229,7 +229,7 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, int l
 */
 bool delete_item(hash_table * hash, uint32_t key, int logging){
     uint32_t index = hash_function(key, hash->size);
-    hash_item *curr, *next;
+    hash_item *curr, *next, *to_delete;
 
     pthread_rwlock_wrlock(hash->locks[index]);
 
@@ -239,7 +239,7 @@ bool delete_item(hash_table * hash, uint32_t key, int logging){
         return false;
     }else if(hash->table[index]->key == key){
         next = hash->table[index]->next;
-        delete_hitem(hash->table[index], hash->item_delete);
+        to_delete = hash->table[index];
         hash->table[index] = next;
         if(logging){
             pthread_mutex_lock(hash->log_locks[index]);
@@ -255,7 +255,7 @@ bool delete_item(hash_table * hash, uint32_t key, int logging){
             curr = next, next = curr->next );
         if(next != NULL){
             curr->next = next->next;
-            delete_hitem(next, hash->item_delete);
+            to_delete = next;
             if(logging){
                 pthread_mutex_lock(hash->log_locks[index]);
             }
@@ -270,7 +270,7 @@ bool delete_item(hash_table * hash, uint32_t key, int logging){
             return false;
         }
     }
-
+    delete_hitem(to_delete, hash->item_delete);
     return true;
 }
 
