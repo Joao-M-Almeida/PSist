@@ -152,7 +152,7 @@ At startup the data server initializes the hash table according to the flowchart
 
 At a clean exit the data server creates a new backup and deletes the log file. Which means that there only exists a log file if the data server didn't exit orderly.
 
-To prevent data consistency problems the backup file is only deleted after a new backup file is ready.
+To prevent data consistency problems with faults during this process, the backup file is only deleted after a new backup file is ready.
 
 
 
@@ -160,7 +160,8 @@ To prevent data consistency problems the backup file is only deleted after a new
 \label{sub:Synchronization}
 
 To guarantee data consistency on the hash table and on the log file a set of measures
-
+%TODO synchronization on the hash table, explain for insert, deletes and Reads
+%TODO log sync
 
 \section{Key-Value Communication}
 
@@ -184,15 +185,16 @@ The structure of the messages exchanged between the \textbf{client} and the \tex
     \item[DELETE\_RESP] - delete response;
     \item[ERROR] - error message;
 \end{description}
-After a \emph{WRITE\_REQ} or a \emph{READ\_RESP} a buffer containing the value to store is transmitted over TCP with the length being specified on the previous message.
+After a \emph{WRITE\_REQ}, a \emph{WRITE\_REQ\_OW} or a \emph{READ\_RESP} a buffer containing the value is transmitted over TCP with the length being specified on the previous message.
 
 
-\subsection{Error Messages}
-\label{sub:ErrorMessages}
+%\subsection{Error Messages}
+%\label{sub:ErrorMessages}
+% TODO
 
 \section{Inter Server Communication}
 \label{sec:CommunicationProtocol}
-To ensure that the processes keep each other alive, the data server knows when to shutdown and the front server knows the Data Server's address, the servers have a communication protocol.
+To ensure that the processes keep each other alive, that the data server knows when to shutdown and  that the front server knows the Data Server's address, the servers have a communication protocol.
 One thread in each server, called 'communication worker', exchanges the following messages:
   \begin{description}
     \item[PING] - default message, just to ensure the other process is still alive, 1 per second;
@@ -201,16 +203,16 @@ One thread in each server, called 'communication worker', exchanges the followin
     \item[OK] - informs the Front Server that the Data Server received the EXIT command;
   \end{description}
 
-The bilateral communication between servers is made using an Unix socket with byte streams. To create this communication channel each server follows a small algorithm. First they try to be the client, attempting to connect to the server. If that fails it means the other server isn't running so they launch it, with a fork and a execv, and start accepting requests on the unix socket.
+The bilateral communication between servers is made using an Unix socket with byte streams. To create this communication channel each server follows a small algorithm. First they try to be the client, attempting to connect to the server. If they succeed the system is ready. If that fails it means the other server isn't running so they launch it, with a fork and a execv, and start accepting requests on the unix socket. When they receive a connection the other server is ready. If in the mean time the other server stops responding they re-launch it and wait for it's connection.
 
 \section{Front Server}
 \label{sec:FrontServer}
 
 A flowchart of the execution of the Front Server is available on figure \ref{fig:CommunicationsFront}. The communication to the data server and it's fault tolerance are also detailed.
 
-\begin{figure}[H]
+\begin{figure}[ht]
 \centering
-\includegraphics[width=0.7\textwidth]{./Pictures/Communications-Front.png}
+\includegraphics[width=0.8\textwidth]{./Pictures/Communications-Front.png}
 \caption{All communications with Front Server}\label{fig:CommunicationsFront}
 \end{figure}
 
@@ -219,9 +221,9 @@ A flowchart of the execution of the Front Server is available on figure \ref{fig
 
 The execution of the Data Server is depicted on the flowchart on figure \ref{fig:CommunicationsData}.
 
-\begin{figure}[H]
+\begin{figure}[ht]
 \centering
-\includegraphics[width=0.7\textwidth]{./Pictures/Communications-Data.png}
+\includegraphics[width=0.9\textwidth]{./Pictures/Communications-Data.png}
 \caption{All communications with Data Server}\label{fig:CommunicationsData}
 \end{figure}
 
@@ -230,7 +232,7 @@ The execution of the Data Server is depicted on the flowchart on figure \ref{fig
 
 The threads are created following the \textbf{on demand} strategy for both the front and the data server.
 
-On the front server there are three threads always running and others created to handle kv_connect requests. There is one thread reading from stdin to check if the user tells the server to quit, there is the main thread, locked in a accept for the TCP socket that creates new threads for each new request and the communication socket, that exchanges messages with the data server, see section \ref{sec:CommunicationProtocol}.
+On the front server there are three threads always running and others created to handle kv\_connect requests. There is one thread reading from stdin to check if the user tells the server to quit, there is the main thread, locked in a accept for the TCP socket that creates new threads for each new request and the communication socket, that exchanges messages with the data server, see section \ref{sec:CommunicationProtocol}.
 
 On the data server there are two threads always running and others created on demand to answer client requests. There is the main thread responsible for creating threads to answer the clients and the communication thread.
 
@@ -241,9 +243,9 @@ Besides preventing data loss with the use of a backup and a log file, see sectio
 
 To detect a fault on one of the servers the communication protocol is used. %TODO
 
-\section{Clients}
-\label{sec:Clients}
-
+%\section{Clients}
+%\label{sec:Clients}
+% TODO
 
 
 
