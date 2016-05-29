@@ -109,10 +109,7 @@ int main(int argc, char const *argv[]) {
                 key = atoi(key_char);
                 result = kv_delete(connection, key);
                 if (result == -1){
-                    perror("KVDelete");
-                    clean_up(-1);
-                } else if(result == 1){
-                    printf("No Item with key: %d\n", key);
+                    printf("Error or no Item with key: %d\n", key);
                 } else {
                     printf("Deleted item with key: %d\n", key);
                 }

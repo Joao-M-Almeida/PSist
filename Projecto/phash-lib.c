@@ -451,135 +451,141 @@ int process_hash_log(hash_table * hash, char * log_path){
     char * buf2 = (char *) malloc(sizeof(char)*(bufsize+1));
     int k;
     k = read(log_file, buf, bufsize);
-    buf[k]='\0'; /*Needed?*/
-    #ifdef DEBUG
-        printf("Buffer:");
-        print_bytes(buf,  k+1);
-    #endif
-    char log_type;
-    char space;
-    char * ptr, * ptr2, * ptr3;
-    Item item_aux;
-    int l;
-    uint32_t key, val_size;
-    ptr = buf;
-    int buf_left = k;
-    while(1){
-        /*Get log type and space*/
-        if(sscanf(buf,"%c%c",&log_type, &space)!=2){
-            #ifdef DEBUG
-                printf("log_type errror\n");
-            #endif
-            return -1;
-        }
-        if(space != ' '){
-            #ifdef DEBUG
-                printf("No ' ' found\n");
-            #endif
-            return -1;
-        }
-        if(log_type == 'I'){
-            /*it's an insert*/
-            #ifdef DEBUG
-                printf("Processing Insert\n");
-            #endif
-            ptr = buf+2;
-            buf_left-=2;
-            if(sscanf(ptr,"%u %u%c%n",&key, &val_size ,&space, &l)>=3){
-                if(space != ' '){
-                    #ifdef DEBUG
-                        printf("No ' ' found\n");
-                    #endif
-                    return -1;
-                }
-                /*Got key and size*/
-                ptr+=l;
-                buf_left-=l;
-                if(buf+bufsize-ptr >= val_size){
-                    /*There is still room in the buffer for the value*/
-                    ptr2 = (char *) malloc(sizeof(char)*(val_size+1));
-                    memcpy(ptr2, ptr, val_size);
-                    ptr2[val_size]='\0';
-                    item_aux = hash->item_create(val_size, (uint8_t *) ptr2);
-                    insert_item(hash, item_aux, key, 0, 0);
-                    #ifdef DEBUG
-                        printf("K: %d, V:", key);
-                        print_bytes(ptr2,  val_size);
-                    #endif
-                    buf_left-=val_size;
-                    ptr+=val_size;
-                }else{
-                    /*Copy the rest of the buffer to a new buffer and
-                    read the rest of the value*/
-                    ptr2 = (char *) malloc(sizeof(char)*(val_size+1));
-                    memcpy(ptr2, ptr, buf+bufsize-ptr);
-                    ptr3 = ptr2 + (buf+bufsize-ptr);
-                    read(log_file, ptr3, val_size-(buf+bufsize-ptr));
-                    ptr2[val_size]='\0';
-                    item_aux =hash->item_create(val_size, (uint8_t *) ptr2);
-                    insert_item(hash, item_aux, key, 0,0);
-                    #ifdef DEBUG
-                        printf("K: %d, V:", key);
-                        print_bytes(ptr2,  val_size);
-                    #endif
-                    ptr = buf + bufsize;
-                    buf_left=0;
-
-                }
-            }else{
+    if(k!=0){
+        buf[k]='\0'; /*Needed?*/
+        #ifdef DEBUG
+            printf("Buffer:");
+            print_bytes(buf,  k+1);
+        #endif
+        char log_type;
+        char space;
+        char * ptr, * ptr2, * ptr3;
+        Item item_aux;
+        int l;
+        uint32_t key, val_size;
+        ptr = buf;
+        int buf_left = k;
+        while(1){
+            /*Get log type and space*/
+            if(sscanf(buf,"%c%c",&log_type, &space)!=2){
                 #ifdef DEBUG
-                    printf("Error scanf Insert\n");
+                    printf("log_type errror\n");
                 #endif
                 return -1;
             }
-        }else if (log_type == 'D'){
-            #ifdef DEBUG
-                printf("Processing Delete\n");
-            #endif
-            /*It's a delete*/
-            buf_left-=2;
-            ptr = buf+2;
-            if(sscanf(ptr,"%u%n",&key, &l)>=1){
-                delete_item(hash, key, 0);
-                ptr+=l;
-                buf_left-=l;
-            }else{
+            if(space != ' '){
+                #ifdef DEBUG
+                    printf("No ' ' found\n");
+                #endif
                 return -1;
             }
-        }else{
+            if(log_type == 'I'){
+                /*it's an insert*/
+                #ifdef DEBUG
+                    printf("Processing Insert\n");
+                #endif
+                ptr = buf+2;
+                buf_left-=2;
+                if(sscanf(ptr,"%u %u%c%n",&key, &val_size ,&space, &l)>=3){
+                    if(space != ' '){
+                        #ifdef DEBUG
+                            printf("No ' ' found\n");
+                        #endif
+                        return -1;
+                    }
+                    /*Got key and size*/
+                    ptr+=l;
+                    buf_left-=l;
+                    if(buf+bufsize-ptr >= val_size){
+                        /*There is still room in the buffer for the value*/
+                        ptr2 = (char *) malloc(sizeof(char)*(val_size+1));
+                        memcpy(ptr2, ptr, val_size);
+                        ptr2[val_size]='\0';
+                        item_aux = hash->item_create(val_size, (uint8_t *) ptr2);
+                        insert_item(hash, item_aux, key, 1, 0);
+                        #ifdef DEBUG
+                            printf("K: %d, V:", key);
+                            print_bytes(ptr2,  val_size);
+                        #endif
+                        buf_left-=val_size;
+                        ptr+=val_size;
+                    }else{
+                        /*Copy the rest of the buffer to a new buffer and
+                        read the rest of the value*/
+                        ptr2 = (char *) malloc(sizeof(char)*(val_size+1));
+                        memcpy(ptr2, ptr, buf+bufsize-ptr);
+                        ptr3 = ptr2 + (buf+bufsize-ptr);
+                        read(log_file, ptr3, val_size-(buf+bufsize-ptr));
+                        ptr2[val_size]='\0';
+                        item_aux =hash->item_create(val_size, (uint8_t *) ptr2);
+                        insert_item(hash, item_aux, key, 1, 0);
+                        #ifdef DEBUG
+                            printf("K: %d, V:", key);
+                            print_bytes(ptr2,  val_size);
+                        #endif
+                        ptr = buf + bufsize;
+                        buf_left=0;
+
+                    }
+                }else{
+                    #ifdef DEBUG
+                        printf("Error scanf Insert\n");
+                    #endif
+                    return -1;
+                }
+            }else if (log_type == 'D'){
+                #ifdef DEBUG
+                    printf("Processing Delete\n");
+                #endif
+                /*It's a delete*/
+                buf_left-=2;
+                ptr = buf+2;
+                if(sscanf(ptr,"%u%n",&key, &l)>=1){
+                    delete_item(hash, key, 0);
+                    ptr+=l;
+                    buf_left-=l;
+                }else{
+                    return -1;
+                }
+            }else{
+                #ifdef DEBUG
+                    printf("Unkown Log type\n");
+                #endif
+            }
             #ifdef DEBUG
-                printf("Unkown Log type\n");
+
+            #endif
+            /*buf_left = buf+bufsize-ptr;*/
+            #ifdef DEBUG
+                printf("Ptr str: %s \n Bytes: ", ptr);
+                print_bytes(ptr,  buf_left);
+                printf("Buffer still has %d bytes left\n", buf_left);
+            #endif
+            memcpy(buf2, ptr, buf_left);
+            ptr=buf2+buf_left;
+            #ifdef DEBUG
+                printf("Reading more %d bytes\n",  bufsize-buf_left);
+            #endif
+            k = read(log_file, ptr, bufsize-buf_left);
+            #ifdef DEBUG
+                printf("Read %d bytes\n",  k);
+            #endif
+            buf_left+=k;
+            if(k==0 && buf_left == 0){
+                break;
+            }
+            ptr[k]='\0';
+            ptr3 = buf2;
+            buf2 = buf;
+            buf = ptr3;
+            ptr = buf;
+            #ifdef DEBUG
+                printf("New Buffer:%s\n", buf);
             #endif
         }
+    }else{
         #ifdef DEBUG
-
-        #endif
-        /*buf_left = buf+bufsize-ptr;*/
-        #ifdef DEBUG
-            printf("Ptr str: %s \n Bytes: ", ptr);
-            print_bytes(ptr,  buf_left);
-            printf("Buffer still has %d bytes left\n", buf_left);
-        #endif
-        memcpy(buf2, ptr, buf_left);
-        ptr=buf2+buf_left;
-        #ifdef DEBUG
-            printf("Reading more %d bytes\n",  bufsize-buf_left);
-        #endif
-        k = read(log_file, ptr, bufsize-buf_left);
-        #ifdef DEBUG
-            printf("Read %d bytes\n",  k);
-        #endif
-        buf_left+=k;
-        if(k==0 && buf_left == 0){
-            break;
-        }
-        ptr[k]='\0';
-        ptr3 = buf2;
-        buf2 = buf;
-        buf = ptr3;
-        ptr = buf;
-        #ifdef DEBUG
-            printf("New Buffer:%s\n", buf);
+            printf("Log File empty\n");
         #endif
     }
     #ifdef DEBUG

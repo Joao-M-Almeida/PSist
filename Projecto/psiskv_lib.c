@@ -4,7 +4,7 @@
 #include "psiskv.h"
 #include <stdlib.h>
 #include <string.h>
-/*#include "debug.h"*/
+#include "debug.h"
 #include <stdio.h>
 
 const char * msg_type_to_str(int type){
@@ -42,9 +42,21 @@ int kv_connect(char * kv_server_ip, int kv_server_port){
     char buffer[128];
     char data_server_ip[32];
     int data_server_port;
-    int server_fd = TCPconnect(atoh(kv_server_ip), (unsigned short) kv_server_port);
+    int server_fd;
+    #ifdef DEBUG
+        printf("Starting KV_connect\n");
+    #endif
 
-    if(TCPnrecv(server_fd, (uint8_t*) buffer, 128*sizeof(char)) == -1){
+    server_fd = TCPconnect(atoh(kv_server_ip), (unsigned short) kv_server_port);
+    if(server_fd ==-1){
+        return -1;
+    }
+
+    #ifdef DEBUG
+        printf("Connected to Front\n");
+    #endif
+
+    if(TCPrecv(server_fd, (uint8_t*) buffer, 128*sizeof(char)) == -1){
         return -1;
     }
 
@@ -151,7 +163,7 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
     /*
         Send the Read Request;
     */
-    if (TCPsend(kv_descriptor, to_send, sizeof(to_send))==-1){
+    if (TCPsend(kv_descriptor, to_send, sizeof(kv_msg))==-1){
         return -1;
     }
 
@@ -186,7 +198,7 @@ int kv_read(int kv_descriptor, uint32_t key, char * value, int value_length){
     }
     #ifdef DEBUG
     printf("Value received: ");
-    print_bytes(to_recv,key_value.value_length);
+    print_bytes(to_recv,key_value.value_len);
     #endif
 
     /*
@@ -218,7 +230,7 @@ int kv_delete(int kv_descriptor, uint32_t key){
     /*
         Send the Delete Request;
     */
-    if (TCPsend(kv_descriptor, to_send, sizeof(to_send))==-1){
+    if (TCPsend(kv_descriptor, to_send, sizeof(kv_msg))==-1){
         return -1;
     }
 
@@ -242,7 +254,6 @@ int kv_delete(int kv_descriptor, uint32_t key){
 
     if(key_value.value_len == 0){
         /*No item with that key*/
-        /*TODO: Ask which value should return on this situation*/
         return -1;
     }
 
