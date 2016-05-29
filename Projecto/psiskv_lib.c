@@ -126,7 +126,7 @@ int kv_write(int kv_descriptor, uint32_t key, char * value, int value_length, in
     if(recv==-1){
         return -1;
     } else if(recv==-1){
-        return -2;
+        return -1;
     }
 
     #ifdef DEBUG
