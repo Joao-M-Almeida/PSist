@@ -125,11 +125,11 @@ Item read_item(hash_table * hash, uint32_t key){
 /*
     Find if item already exists, overwrite if specified.
     If it doesn't exist insert the new item
-    TODO: optimize critical sections: for instance remove create item from critical section and item deletion (in overwrite)
 */
 int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, int logging){
     uint32_t index = hash_function(key, hash->size);
     hash_item *aux;
+    hash_item * to_insert = create_hitem(key, item);
     #ifdef DEBUG
         printf("Insert trying to lock\n");
     #endif
@@ -143,7 +143,7 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, int l
         #ifdef DEBUG
             printf("Inserting Item at the begining of empty list\n");
         #endif
-        hash->table[index] = create_hitem(key, item);
+        hash->table[index] = to_insert;
         if(logging){
             pthread_mutex_lock(hash->log_locks[index]);
         }
@@ -162,7 +162,7 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, int l
                 printf("Only item in list with key: %d\n", hash->table[index]->key);
             #endif
         }
-        /*TODO: lock for write hashlock*/
+
         for(aux = hash->table[index];
             aux->next != NULL && aux->key != key;
             aux = aux->next){
@@ -177,7 +177,7 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, int l
         /* Check if found item or not*/
         if(aux->key != key){
             /*didn't find, so is at end of list*/
-            aux->next = create_hitem(key, item);
+            aux->next = to_insert;
             #ifdef DEBUG
                 printf("Inserting Item at end of list\n");
             #endif
@@ -199,11 +199,9 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, int l
                 #ifdef DEBUG
                     printf("Overwriting item");
                 #endif
-                /*pthread_rwlock_wrlock(&aux->lock);*/
-                /*TODO: check if correct*/
-                hash->item_delete(aux->item);
+                Item to_delete = aux->item;
+                /*hash->item_delete(aux->item);*/
                 aux->item = item;
-
 
                 if(logging){
                     pthread_mutex_lock(hash->log_locks[index]);
@@ -213,13 +211,14 @@ int insert_item(hash_table * hash, Item item, uint32_t key, int overwrite, int l
                     log_insert(hash->log,key, item, hash->item_to_byte_array, hash->item_get_size);
                     pthread_mutex_unlock(hash->log_locks[index]);
                 }
+                hash->item_delete(to_delete);
             }else{
                 pthread_rwlock_unlock(hash->locks[index]);
                 /*Item already exists*/
                 return 1;
             }
+        delete_hitem(to_insert, hash->item_delete);
         }
-
     }
     return 0;
 }
