@@ -165,14 +165,19 @@ Which means that there only exists a log file if the data server didn't exit ord
 To prevent data consistency problems with faults during this process, the 
 backup file is only deleted after a new backup file is ready.
 
-
-
 \subsection{Synchronization}
 \label{sub:Synchronization}
 
 To guarantee data consistency on the hash table and on the log file a set of measures
 %TODO synchronization on the hash table, explain for insert, deletes and Reads
 %TODO log sync
+For each position of the hash array there is a position on the locks array, 
+so when some item is to be inserted, read or removed from that list, it does not 
+lead to data race errors, since the accesses are made concurrently, respectively 
+there is also a position on the log lock array to each position of the hash array,
+this one is locked before the unlocking of the data lock and unlock when finished 
+writing the log line, which is in itself atomic, so there is no need to worry with
+item log locks for they can only write entire lines at once.
 
 \section{Key-Value Communication}
 
@@ -237,6 +242,10 @@ it's connection.
 The Front Server is a discovery server and a piece in the fault tolerance system for this project,
 it serves to the clients as an interface to locate the data server, which is addressed at the lowest port he can
 and communicates it to the front server using the communication system between them.
+
+The Front Server also has a Command Thread to allow the apropriate shutdown of both the servers,
+it works by listening to Stdin commands then, if and only if the command is "quit" it will send the command
+to the Data Server and they'll both shutdown properly.
 
 A flowchart of the execution of the Front Server is available on figure \ref{fig:CommunicationsFront}. 
 The communication to the data server and it's fault tolerance are also detailed.
