@@ -2,7 +2,6 @@
 #include "inetutils.h"
 #include "item.h"
 #include "psiskv.h"
-#include "debug.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -18,12 +17,13 @@ int main() {
     char buf[25];
     int id;
     int i;
-    for (i = 0; i < 1; i++) {
+    for (i = 0; i < 5; i++) {
         id = fork();
         if(id==0){
             break;
         }
     }
+    id = getpid();
     printf("I'm client with PID: %d\n",id);
     int kv = kv_connect( (char *) "127.0.0.1", 9999);
     if(kv<=0){
@@ -34,7 +34,7 @@ int main() {
     printf("Writing:\n");
     int r;
     for (i = 0; i < 11; i++) {
-        r = kv_write(kv, i , buf , strlen(buf)+1, 0); /* will not overwrite*/
+        r = kv_write(kv, i , buf , strlen(buf)+1, 1); /* will not overwrite*/
         if(r<0){
             printf("PID: %d Write error\n",id);
             exit(-1);
