@@ -234,6 +234,10 @@ it's connection.
 \section{Front Server}
 \label{sec:FrontServer}
 
+The Front Server is a discovery server and a piece in the fault tolerance system for this project,
+it serves to the clients as an interface to locate the data server, which is addressed at the lowest port he can
+and communicates it to the front server using the communication system between them.
+
 A flowchart of the execution of the Front Server is available on figure \ref{fig:CommunicationsFront}. 
 The communication to the data server and it's fault tolerance are also detailed.
 
@@ -245,6 +249,11 @@ The communication to the data server and it's fault tolerance are also detailed.
 
 \section{Data Server}
 \label{sec:DataServer}
+
+The Data Server, which will be located at the first port it finds available, 
+works as a key-value store, that has four functionalities, such as read, 
+write, update and delete a value with a certain key. It is also a piece on the fault tolerance system,
+by checking constantly if the Front Server is still alive and resurecting him if necessary.
 
 The execution of the Data Server is depicted on the flowchart on figure \ref{fig:CommunicationsData}.
 
