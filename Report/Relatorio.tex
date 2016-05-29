@@ -127,7 +127,9 @@ Figure \ref{fig:KVSyst} shows an overview of how the most important libraries an
 
 \section{Key Value Data Structure}
 
-The \textbf{data storage} is implemented on an \textbf{hash table} where each bucket of the hash table is a \textbf{linked list} and each list entry holds the key and a pointer to the value. See Figure~\ref{fig:DataOverview} for more details.
+The \textbf{data storage} is implemented on an \textbf{hash table} where each bucket of the 
+hash table is a \textbf{linked list} and each list entry holds the key and a pointer to the 
+value. See Figure~\ref{fig:DataOverview} for more details.
 
 \begin{figure}[H]
 \centering
@@ -135,14 +137,21 @@ The \textbf{data storage} is implemented on an \textbf{hash table} where each bu
 \caption{Overview of Data Structures}\label{fig:DataOverview}
 \end{figure}
 
-The hash table component is implemented with \textbf{data abstraction} in mind, in this system it holds a byte array and its size, but could be used to store any kind of data. The item to be stored on the hash table is implemented in  another component, in the key-value store case to the \emph{psiskv\_server.h}. There all necessary auxiliary functions are implemented and a pointer to them is stored on the data structure.
+The hash table component is implemented with \textbf{data abstraction} in mind, 
+in this system it holds a byte array and its size, but could be used to store any 
+kind of data. The item to be stored on the hash table is implemented in  another 
+component, in the key-value store case to the \emph{psiskv\_server.h}. There all necessary 
+auxiliary functions are implemented and a pointer to them is stored on the data structure.
 
 \subsection{Backup and Log}
 \label{sub:BackupLog}
 
-To maintain data between data server executions a backup and a log file are used. The backup stores a snapshot of the state of the Hash table, while the log stores all successful write and delete commands made since startup.
+To maintain data between data server executions a backup and a log file are used. 
+The backup stores a snapshot of the state of the Hash table, while the log stores 
+all successful write and delete commands made since startup.
 
-At startup the data server initializes the hash table according to the flowchart on figure~\ref{fig:BackupLogFlow}.
+At startup the data server initializes the hash table according to the flowchart 
+on figure~\ref{fig:BackupLogFlow}.
 
 \begin{figure}[H]
 \centering
@@ -150,9 +159,11 @@ At startup the data server initializes the hash table according to the flowchart
 \caption{Data server hash table initialization flow}\label{fig:BackupLogFlow}
 \end{figure}
 
-At a clean exit the data server creates a new backup and deletes the log file. Which means that there only exists a log file if the data server didn't exit orderly.
+At a clean exit the data server creates a new backup and deletes the log file. 
+Which means that there only exists a log file if the data server didn't exit orderly.
 
-To prevent data consistency problems with faults during this process, the backup file is only deleted after a new backup file is ready.
+To prevent data consistency problems with faults during this process, the 
+backup file is only deleted after a new backup file is ready.
 
 
 
@@ -165,8 +176,11 @@ To guarantee data consistency on the hash table and on the log file a set of mea
 
 \section{Key-Value Communication}
 
-To use the Key-Value Store the client uses the \emph{psiskv.h} library to establish a connection and make requests.
-The communication flow is exemplified on figure~\ref{fig:Comms}. During the \textbf{kv\_connect} the \textbf{client} connects to the \textbf{Front Server} which responds with the port of the \textbf{Data Server} and then the client connects to it and is ready to make requests.
+To use the Key-Value Store the client uses the \emph{psiskv.h} library to establish a 
+connection and make requests. The communication flow is exemplified on figure~\ref{fig:Comms}. 
+During the \textbf{kv\_connect} the \textbf{client} connects to the \textbf{Front Server} which responds 
+with the port of the \textbf{Data Server} and then the client connects to it and is ready 
+to make requests.
 
 \begin{figure}[H]
 \centering
@@ -174,7 +188,9 @@ The communication flow is exemplified on figure~\ref{fig:Comms}. During the \tex
 \caption{Overview of the client KV store communication flow}\label{fig:Comms}
 \end{figure}
 
-The structure of the messages exchanged between the \textbf{client} and the \textbf{Data server} is:  a  enumerate \emph{msg\_type}, a \emph{uint32\_t} with the \textbf{key} and an \emph{unsigned int} with the length of the value. The possible message types are:
+The structure of the messages exchanged between the \textbf{client} and the \textbf{Data server} 
+is:  a  enumerate \emph{msg\_type}, a \emph{uint32\_t} with the \textbf{key} and an \emph{unsigned int} 
+with the length of the value. The possible message types are:
 \begin{description}
     \item[WRITE\_REQ] - write request;
     \item[WRITE\_REQ\_OW] - write request with overwrite;
@@ -185,8 +201,9 @@ The structure of the messages exchanged between the \textbf{client} and the \tex
     \item[DELETE\_RESP] - delete response;
     \item[ERROR] - error message;
 \end{description}
-After a \emph{WRITE\_REQ}, a \emph{WRITE\_REQ\_OW} or a \emph{READ\_RESP} a buffer containing the value is transmitted over TCP with the length being specified on the previous message.
-
+After a \emph{WRITE\_REQ}, a \emph{WRITE\_REQ\_OW} or a \emph{READ\_RESP} a buffer containing 
+the value is transmitted over TCP with the length being specified on the previous 
+message.
 
 %\subsection{Error Messages}
 %\label{sub:ErrorMessages}
@@ -194,8 +211,10 @@ After a \emph{WRITE\_REQ}, a \emph{WRITE\_REQ\_OW} or a \emph{READ\_RESP} a buff
 
 \section{Inter Server Communication}
 \label{sec:CommunicationProtocol}
-To ensure that the processes keep each other alive, that the data server knows when to shutdown and  that the front server knows the Data Server's address, the servers have a communication protocol.
-One thread in each server, called 'communication worker', exchanges the following messages:
+To ensure that the processes keep each other alive, that the data server knows when 
+to shutdown and  that the front server knows the Data Server's address, the servers 
+have a communication protocol. One thread in each server, called 'communication 
+worker', exchanges the following messages:
   \begin{description}
     \item[PING] - default message, just to ensure the other process is still alive, 1 per second;
     \item['PORT'] - informs the Front Server about the Data Server's port;
@@ -203,12 +222,20 @@ One thread in each server, called 'communication worker', exchanges the followin
     \item[OK] - informs the Front Server that the Data Server received the EXIT command;
   \end{description}
 
-The bilateral communication between servers is made using an Unix socket with byte streams. To create this communication channel each server follows a small algorithm. First they try to be the client, attempting to connect to the server. If they succeed the system is ready. If that fails it means the other server isn't running so they launch it, with a fork and a execv, and start accepting requests on the unix socket. When they receive a connection the other server is ready. If in the mean time the other server stops responding they re-launch it and wait for it's connection.
+The bilateral communication between servers is made using an Unix socket with 
+byte streams. To create this communication channel each server follows a small 
+algorithm. First they try to be the client, attempting to connect to the server. 
+If they succeed the system is ready. If that fails it means the other server isn't 
+running so they launch it, with a fork and a execv, and start accepting requests 
+on the unix socket. When they receive a connection the other server is ready. If 
+in the mean time the other server stops responding they re-launch it and wait for 
+it's connection.
 
 \section{Front Server}
 \label{sec:FrontServer}
 
-A flowchart of the execution of the Front Server is available on figure \ref{fig:CommunicationsFront}. The communication to the data server and it's fault tolerance are also detailed.
+A flowchart of the execution of the Front Server is available on figure \ref{fig:CommunicationsFront}. 
+The communication to the data server and it's fault tolerance are also detailed.
 
 \begin{figure}[ht]
 \centering
@@ -230,18 +257,33 @@ The execution of the Data Server is depicted on the flowchart on figure \ref{fig
 \subsection{Thread Management}
 \label{sub:ThreadManagement}
 
-The threads are created following the \textbf{on demand} strategy for both the front and the data server.
+The threads are created following the \textbf{on demand} strategy for both the front and 
+the data server.
 
-On the front server there are three threads always running and others created to handle kv\_connect requests. There is one thread reading from stdin to check if the user tells the server to quit, there is the main thread, locked in a accept for the TCP socket that creates new threads for each new request and the communication socket, that exchanges messages with the data server, see section \ref{sec:CommunicationProtocol}.
+On the front server there are three threads always running and others created 
+to handle kv\_connect requests. There is one thread reading from stdin to check if 
+the user tells the server to quit, there is the main thread, locked in a accept for the 
+TCP socket that creates new threads for each new request and the communication 
+socket, that exchanges messages with the data server, see section \ref{sec:CommunicationProtocol}.
 
-On the data server there are two threads always running and others created on demand to answer client requests. There is the main thread responsible for creating threads to answer the clients and the communication thread.
+On the data server there are two threads always running and others created 
+on demand to answer client requests. There is the main thread responsible for 
+creating threads to answer the clients and the communication thread.
 
 \section{Fault Tolerance}
 \label{sec:FaultTolerance}
 
-Besides preventing data loss with the use of a backup and a log file, see section \ref{sub:BackupLog}, there are also mechanisms to recover from crashes on one of the the servers. As specified, faults during recovery were ignored.
+Besides preventing data loss with the use of a backup and a log file, see section \ref{sub:BackupLog}, 
+there are also mechanisms to recover from crashes on one of the the servers. 
+As specified, faults during recovery were ignored.
 
-To detect a fault on one of the servers the communication protocol is used. %TODO
+To detect a fault on one of the servers the communication protocol is used. 
+When one of the servers crashes, the conection between the communication 
+workers falls, at that point, the other server's connection worker will issue the pull 
+up command, it will fork the process, kill the binded servers in the new process and 
+call execv with the oposite server's filename, this one, when it's communication 
+worker is ready it connects to the other server's communication worker, in order 
+to reestablish the background connection and resume the fault tolerance.
 
 %\section{Clients}
 %\label{sec:Clients}
